@@ -1,5 +1,6 @@
 
 import { ChartAreaInteractive } from "./components/chart-area-interactive"
+import { DashboardCharts } from "./components/dashboard-charts"
 import { DataTable } from "./components/data-table"
 import { SectionCards } from "./components/section-cards"
 import data from "@/app/dashboard/data.json"  
@@ -14,6 +15,9 @@ export default function Page() {
           <ChartAreaInteractive />
         </div>
         <DataTable data={data} />
+        <div className="px-4 lg:px-6">
+          <DashboardCharts />
+        </div>
       </div>
     </div>
   )
