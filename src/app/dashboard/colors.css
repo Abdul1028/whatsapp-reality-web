@@ -1,0 +1,25 @@
+:root {
+  /* Neutral colors */
+  --color-neutral-50: oklch(0.985 0 0);
+  --color-neutral-500: oklch(0.556 0 0);
+  --color-neutral-600: oklch(0.488 0 0);
+  
+  /* Blue colors */
+  --color-blue-50: oklch(0.985 0.025 240);
+  --color-blue-500: oklch(0.556 0.18 264.376);
+  --color-blue-600: oklch(0.488 0.243 264.376);
+  
+  /* Lime/Green colors */
+  --color-lime-50: oklch(0.985 0.025 120);
+  --color-lime-600: oklch(0.645 0.246 120);
+  
+  /* Amber colors */
+  --color-amber-50: oklch(0.985 0.025 70);
+  --color-amber-500: oklch(0.696 0.17 70.08);
+  --color-amber-600: oklch(0.645 0.246 70.08);
+  
+  /* Pink colors */
+  --color-pink-50: oklch(0.985 0.025 330);
+  --color-pink-500: oklch(0.696 0.17 330);
+  --color-pink-600: oklch(0.645 0.246 330);
+} 

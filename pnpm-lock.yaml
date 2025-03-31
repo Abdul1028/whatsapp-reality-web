@@ -77,6 +77,9 @@ importers:
       dnd-kit:
         specifier: ^0.0.2
         version: 0.0.2
+      fonts:
+        specifier: ^0.0.2
+        version: 0.0.2
       lucide-react:
         specifier: ^0.486.0
         version: 0.486.0(react@19.1.0)
@@ -1225,6 +1228,9 @@ packages:
   fast-equals@5.2.2:
     resolution: {integrity: sha512-V7/RktU11J3I36Nwq2JnZEM7tNm17eBJz+u25qdxBZeCKiX6BkVSZQjwWIr+IobgnZy+ag73tTZgZi7tr0LrBw==}
     engines: {node: '>=6.0.0'}
+
+  fonts@0.0.2:
+    resolution: {integrity: sha512-tKwxaeJZb6w0U1yNVDdjtuYaIUljA4qjRboSXvoybDFKFkX12tZ4wxRsi50X7s3MK80I8mka8uROPZeGQ2A8xg==}
 
   function-bind@1.1.2:
     resolution: {integrity: sha512-7XHNxH7qX9xG5mIwxkhumTox/MIRNcOgDrxWsMt2pAr23WHp6MrRlN7FBSFpCpr+oVO0F744iUgR82nJMfG2SA==}
@@ -2857,6 +2863,8 @@ snapshots:
   eventemitter3@4.0.7: {}
 
   fast-equals@5.2.2: {}
+
+  fonts@0.0.2: {}
 
   function-bind@1.1.2: {}
 
