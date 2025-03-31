@@ -7,7 +7,7 @@ import {
 import { ActiveThemeProvider } from "@/components/active-theme"
 import { AppSidebar } from "@/app/dashboard/components/app-sidebar"
 import { SiteHeader } from "@/app/dashboard/components/site-header"
-
+import { StickyNavbar } from "@/app/dashboard/components/sticky-navbar"
 import "@/app/dashboard/colors.css"
 import "@/app/dashboard/theme.css"
 
@@ -33,7 +33,7 @@ export default async function DashboardLayout({
       <ActiveThemeProvider initialTheme={initialTheme}>
         <AppSidebar variant="inset" />
         <SidebarInset>
-          <SiteHeader />
+          <StickyNavbar />
           <div className="flex flex-1 flex-col">{children}</div>
         </SidebarInset>
       </ActiveThemeProvider>

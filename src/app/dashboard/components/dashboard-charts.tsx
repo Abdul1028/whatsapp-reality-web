@@ -31,14 +31,9 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import {
-  ChartConfig,
-  ChartContainer,
-  ChartLegend,
-  ChartLegendContent,
-  ChartTooltip,
-  ChartTooltipContent,
-} from "@/components/ui/chart"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Button } from "@/components/ui/button"
+import { Download, ZoomIn, ZoomOut, RefreshCw } from "lucide-react"
 
 // Sample data for charts
 const barChartData = [
@@ -93,52 +88,7 @@ const scatterData = [
   { x: 80, y: 30, z: 250, name: "Product F" },
 ]
 
-// Chart configurations
-const barChartConfig = {
-  desktop: {
-    label: "Desktop",
-    color: "var(--primary)",
-  },
-  mobile: {
-    label: "Mobile",
-    color: "var(--chart-3)",
-  },
-} satisfies ChartConfig
-
-const lineChartConfig = {
-  visitors: {
-    label: "Visitors",
-    color: "var(--primary)",
-  },
-} satisfies ChartConfig
-
-const pieChartConfig = {
-  chrome: { label: "Chrome", color: "var(--primary)" },
-  firefox: { label: "Firefox", color: "var(--chart-2)" },
-  edge: { label: "Edge", color: "var(--chart-3)" },
-  safari: { label: "Safari", color: "var(--chart-4)" },
-  other: { label: "Other", color: "var(--chart-5)" },
-} satisfies ChartConfig
-
-const areaChartConfig = {
-  users: { label: "Users", color: "var(--primary)" },
-  sessions: { label: "Sessions", color: "var(--chart-2)" },
-  pageviews: { label: "Pageviews", color: "var(--chart-4)" },
-} satisfies ChartConfig
-
-const radialBarConfig = {
-  age1824: { label: "18-24", color: "var(--primary)" },
-  age2534: { label: "25-34", color: "var(--chart-2)" },
-  age3544: { label: "35-44", color: "var(--chart-3)" },
-  age4554: { label: "45-54", color: "var(--chart-4)" },
-  age55plus: { label: "55+", color: "var(--chart-5)" },
-} satisfies ChartConfig
-
-const scatterConfig = {
-  product: { label: "Product", color: "var(--primary)" },
-} satisfies ChartConfig
-
-// COLORS array for pie chart
+// Color array for charts
 const COLORS = [
   "var(--primary)",
   "var(--chart-2)",
@@ -148,256 +98,610 @@ const COLORS = [
 ]
 
 export function DashboardCharts() {
+  const [activeTab, setActiveTab] = React.useState("daily")
+  const [refreshKey, setRefreshKey] = React.useState(0)
+
+  // Function to handle data download
+  const handleDownload = (chartName: string, data: any[]) => {
+    const jsonString = `data:text/json;chatset=utf-8,${encodeURIComponent(
+      JSON.stringify(data, null, 2)
+    )}`
+    const link = document.createElement("a")
+    link.href = jsonString
+    link.download = `${chartName}-data.json`
+    link.click()
+  }
+
+  // Chart toolbar component
+  const ChartToolbar = ({ title, data }: { title: string; data: any[] }) => (
+    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+      <div className="space-y-1">
+        <CardTitle>{title}</CardTitle>
+        <CardDescription>
+          {title === "Monthly Traffic"
+            ? "Desktop vs mobile visitors over the last 6 months"
+            : title === "Visitor Trend"
+            ? "Daily visitor count"
+            : title === "Browser Share"
+            ? "Distribution by browser"
+            : title === "Website Analytics"
+            ? "Users, sessions and pageviews"
+            : title === "Age Demographics"
+            ? "User age distribution"
+            : "Price vs. Rating vs. Sales Volume"}
+        </CardDescription>
+      </div>
+      <div className="flex items-center gap-1">
+        <Button
+          variant="outline"
+          size="icon"
+          className="h-7 w-7"
+          onClick={() => setRefreshKey(prev => prev + 1)}
+        >
+          <RefreshCw className="h-3.5 w-3.5" />
+          <span className="sr-only">Refresh</span>
+        </Button>
+        <Button
+          variant="outline"
+          size="icon"
+          className="h-7 w-7"
+          onClick={() => handleDownload(title, data)}
+        >
+          <Download className="h-3.5 w-3.5" />
+          <span className="sr-only">Download</span>
+        </Button>
+      </div>
+    </div>
+  )
+
   return (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-      {/* Bar Chart */}
-      <Card className="col-span-1 md:col-span-2">
-        <CardHeader>
-          <CardTitle>Monthly Traffic</CardTitle>
-          <CardDescription>
-            Desktop vs mobile visitors over the last 6 months
-          </CardDescription>
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-1">
+      {/* Monthly Traffic Chart */}
+      <Card className="col-span-1 md:col-span-2 lg:col-span-2 overflow-hidden">
+        <CardHeader className="pb-0">
+          <ChartToolbar title="Monthly Traffic" data={barChartData} />
         </CardHeader>
-        <CardContent>
-          <ChartContainer config={barChartConfig} className="h-[300px]">
-            <BarChart accessibilityLayer data={barChartData}>
-              <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
-              <XAxis
-                dataKey="month"
-                tickLine={false}
-                axisLine={false}
-                tickMargin={8}
-              />
-              <YAxis tickLine={false} axisLine={false} tickMargin={8} />
-              <ChartTooltip content={<ChartTooltipContent />} />
-              <ChartLegend content={<ChartLegendContent />} />
-              <Bar
-                dataKey="desktop"
-                fill="var(--primary)"
-                radius={[4, 4, 0, 0]}
-              />
-              <Bar
-                dataKey="mobile"
-                fill="var(--chart-3)"
-                radius={[4, 4, 0, 0]}
-              />
-            </BarChart>
-          </ChartContainer>
+        <CardContent className="p-0 sm:p-6">
+          <Tabs defaultValue="bar" className="w-full">
+            <div className="flex justify-center p-1">
+              <TabsList>
+                <TabsTrigger value="bar">Bar</TabsTrigger>
+                <TabsTrigger value="stacked">Stacked</TabsTrigger>
+                <TabsTrigger value="line">Line</TabsTrigger>
+              </TabsList>
+            </div>
+            <TabsContent value="bar" className="mt-0">
+              <div className="h-[300px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={barChartData} margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
+                    <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
+                    <XAxis dataKey="month" />
+                    <YAxis />
+                    <Tooltip 
+                      contentStyle={{ 
+                        backgroundColor: 'var(--background)', 
+                        borderColor: 'var(--border)',
+                        borderRadius: '8px',
+                      }} 
+                    />
+                    <Legend wrapperStyle={{ paddingTop: '10px' }} />
+                    <Bar 
+                      dataKey="desktop" 
+                      name="Desktop" 
+                      fill="var(--primary)" 
+                      radius={[4, 4, 0, 0]} 
+                      animationDuration={1500}
+                    />
+                    <Bar 
+                      dataKey="mobile" 
+                      name="Mobile" 
+                      fill="var(--chart-3)" 
+                      radius={[4, 4, 0, 0]} 
+                      animationDuration={1500}
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </TabsContent>
+            <TabsContent value="stacked" className="mt-0">
+              <div className="h-[300px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={barChartData} margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
+                    <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
+                    <XAxis dataKey="month" />
+                    <YAxis />
+                    <Tooltip 
+                      contentStyle={{ 
+                        backgroundColor: 'var(--background)', 
+                        borderColor: 'var(--border)',
+                        borderRadius: '8px',
+                      }} 
+                    />
+                    <Legend wrapperStyle={{ paddingTop: '10px' }} />
+                    <Bar 
+                      dataKey="desktop" 
+                      name="Desktop" 
+                      stackId="a" 
+                      fill="var(--primary)" 
+                      radius={[4, 4, 0, 0]} 
+                      animationDuration={1500}
+                    />
+                    <Bar 
+                      dataKey="mobile" 
+                      name="Mobile" 
+                      stackId="a" 
+                      fill="var(--chart-3)" 
+                      radius={[0, 0, 0, 0]} 
+                      animationDuration={1500}
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </TabsContent>
+            <TabsContent value="line" className="mt-0">
+              <div className="h-[300px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={barChartData} margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
+                    <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
+                    <XAxis dataKey="month" />
+                    <YAxis />
+                    <Tooltip 
+                      contentStyle={{ 
+                        backgroundColor: 'var(--background)', 
+                        borderColor: 'var(--border)',
+                        borderRadius: '8px',
+                      }} 
+                    />
+                    <Legend wrapperStyle={{ paddingTop: '10px' }} />
+                    <Line 
+                      type="monotone" 
+                      dataKey="desktop" 
+                      name="Desktop" 
+                      stroke="var(--primary)" 
+                      strokeWidth={2} 
+                      dot={{ r: 5 }} 
+                      activeDot={{ r: 8 }}
+                      animationDuration={1500}
+                    />
+                    <Line 
+                      type="monotone" 
+                      dataKey="mobile" 
+                      name="Mobile" 
+                      stroke="var(--chart-3)" 
+                      strokeWidth={2} 
+                      dot={{ r: 5 }} 
+                      activeDot={{ r: 8 }}
+                      animationDuration={1500}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </TabsContent>
+          </Tabs>
         </CardContent>
       </Card>
 
-      {/* Line Chart */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Visitor Trend</CardTitle>
-          <CardDescription>Daily visitor count</CardDescription>
+      {/* Visitor Trend Chart */}
+      <Card className="col-span-1 overflow-hidden">
+        <CardHeader className="pb-0">
+          <ChartToolbar title="Visitor Trend" data={lineChartData} />
         </CardHeader>
-        <CardContent>
-          <ChartContainer config={lineChartConfig} className="h-[300px]">
-            <LineChart accessibilityLayer data={lineChartData}>
-              <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
-              <XAxis
-                dataKey="date"
-                tickLine={false}
-                axisLine={false}
-                tickMargin={8}
-                tickFormatter={(value) => value.split(" ")[0]}
-                interval="preserveStartEnd"
-              />
-              <YAxis 
-                tickLine={false} 
-                axisLine={false} 
-                tickMargin={8}
-                domain={[0, 'dataMax + 50']}
-              />
-              <ChartTooltip content={<ChartTooltipContent />} />
-              <Line
-                type="monotone"
-                dataKey="visitors"
-                stroke="var(--primary)"
-                strokeWidth={2}
-                activeDot={{ r: 6 }}
-                dot={{ r: 4 }}
-              />
-            </LineChart>
-          </ChartContainer>
+        <CardContent className="p-0 sm:p-6">
+          <Tabs defaultValue="daily" className="w-full">
+            <div className="flex justify-center p-1">
+              <TabsList>
+                <TabsTrigger value="daily" onClick={() => setActiveTab("daily")}>
+                  Daily
+                </TabsTrigger>
+                <TabsTrigger value="weekly" onClick={() => setActiveTab("weekly")}>
+                  Weekly
+                </TabsTrigger>
+                <TabsTrigger value="monthly" onClick={() => setActiveTab("monthly")}>
+                  Monthly
+                </TabsTrigger>
+              </TabsList>
+            </div>
+            <TabsContent value={activeTab} className="mt-0">
+              <div className="h-[300px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={lineChartData} margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
+                    <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
+                    <XAxis 
+                      dataKey="date" 
+                      tickFormatter={(value) => value.split(" ")[0]}
+                    />
+                    <YAxis domain={[0, 'auto']} />
+                    <Tooltip 
+                      contentStyle={{ 
+                        backgroundColor: 'var(--background)', 
+                        borderColor: 'var(--border)',
+                        borderRadius: '8px',
+                      }} 
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="visitors"
+                      name="Visitors"
+                      stroke="var(--primary)"
+                      strokeWidth={3}
+                      dot={{ r: 6, fill: 'var(--primary)' }}
+                      activeDot={{ r: 8 }}
+                      animationDuration={1500}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </TabsContent>
+          </Tabs>
         </CardContent>
       </Card>
 
-      {/* Pie Chart - Improved */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Browser Share</CardTitle>
-          <CardDescription>Distribution by browser</CardDescription>
+      {/* Browser Share Chart */}
+      <Card className="col-span-1 overflow-hidden">
+        <CardHeader className="pb-0">
+          <ChartToolbar title="Browser Share" data={pieChartData} />
         </CardHeader>
-        <CardContent>
-          <ChartContainer config={pieChartConfig} className="h-[300px]">
-            <PieChart accessibilityLayer>
-              <Pie
-                data={pieChartData}
-                dataKey="value"
-                nameKey="name"
+        <CardContent className="p-0 sm:p-6">
+          <Tabs defaultValue="pie" className="w-full">
+            <div className="flex justify-center p-1">
+              <TabsList>
+                <TabsTrigger value="pie">Pie</TabsTrigger>
+                <TabsTrigger value="donut">Donut</TabsTrigger>
+              </TabsList>
+            </div>
+            <TabsContent value="pie" className="mt-0">
+              <div className="h-[300px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
+                    <Pie
+                      data={pieChartData}
+                      dataKey="value"
+                      nameKey="name"
+                      cx="50%"
+                      cy="50%"
+                      outerRadius={80}
+                      animationDuration={1500}
+                      label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                    >
+                      {pieChartData.map((entry, index) => (
+                        <Cell 
+                          key={`cell-${index}`} 
+                          fill={COLORS[index % COLORS.length]} 
+                        />
+                      ))}
+                    </Pie>
+                    <Tooltip 
+                      contentStyle={{ 
+                        backgroundColor: 'var(--background)', 
+                        borderColor: 'var(--border)',
+                        borderRadius: '8px',
+                      }} 
+                      formatter={(value) => `${value}%`}
+                    />
+                    <Legend 
+                      verticalAlign="bottom" 
+                      align="center"
+                      wrapperStyle={{ paddingTop: '20px' }}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            </TabsContent>
+            <TabsContent value="donut" className="mt-0">
+              <div className="h-[300px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
+                    <Pie
+                      data={pieChartData}
+                      dataKey="value"
+                      nameKey="name"
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={40}
+                      outerRadius={80}
+                      animationDuration={1500}
+                      label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                    >
+                      {pieChartData.map((entry, index) => (
+                        <Cell 
+                          key={`cell-${index}`} 
+                          fill={COLORS[index % COLORS.length]} 
+                        />
+                      ))}
+                    </Pie>
+                    <Tooltip 
+                      contentStyle={{ 
+                        backgroundColor: 'var(--background)', 
+                        borderColor: 'var(--border)',
+                        borderRadius: '8px',
+                      }} 
+                      formatter={(value) => `${value}%`}
+                    />
+                    <Legend 
+                      verticalAlign="bottom" 
+                      align="center"
+                      wrapperStyle={{ paddingTop: '20px' }}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            </TabsContent>
+          </Tabs>
+        </CardContent>
+      </Card>
+
+      {/* Website Analytics Chart */}
+      <Card className="col-span-1 md:col-span-2 lg:col-span-2 overflow-hidden">
+        <CardHeader className="pb-0">
+          <ChartToolbar title="Website Analytics" data={areaChartData} />
+        </CardHeader>
+        <CardContent className="p-0 sm:p-6">
+          <Tabs defaultValue="stacked" className="w-full">
+            <div className="flex justify-center p-1">
+              <TabsList>
+                <TabsTrigger value="stacked">Stacked</TabsTrigger>
+                <TabsTrigger value="overlay">Overlay</TabsTrigger>
+                <TabsTrigger value="composed">Composed</TabsTrigger>
+              </TabsList>
+            </div>
+            <TabsContent value="stacked" className="mt-0">
+              <div className="h-[300px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={areaChartData} margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
+                    <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
+                    <XAxis dataKey="date" />
+                    <YAxis />
+                    <Tooltip 
+                      contentStyle={{ 
+                        backgroundColor: 'var(--background)', 
+                        borderColor: 'var(--border)',
+                        borderRadius: '8px',
+                      }} 
+                    />
+                    <Legend wrapperStyle={{ paddingTop: '10px' }} />
+                    <Area
+                      type="monotone"
+                      dataKey="pageviews"
+                      name="Pageviews"
+                      stackId="1"
+                      stroke="var(--chart-4)"
+                      fill="var(--chart-4)"
+                      fillOpacity={0.6}
+                      animationDuration={1500}
+                    />
+                    <Area
+                      type="monotone"
+                      dataKey="sessions"
+                      name="Sessions"
+                      stackId="1"
+                      stroke="var(--chart-2)"
+                      fill="var(--chart-2)"
+                      fillOpacity={0.6}
+                      animationDuration={1500}
+                    />
+                    <Area
+                      type="monotone"
+                      dataKey="users"
+                      name="Users"
+                      stackId="1"
+                      stroke="var(--primary)"
+                      fill="var(--primary)"
+                      fillOpacity={0.6}
+                      animationDuration={1500}
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+            </TabsContent>
+            <TabsContent value="overlay" className="mt-0">
+              <div className="h-[300px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={areaChartData} margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
+                    <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
+                    <XAxis dataKey="date" />
+                    <YAxis />
+                    <Tooltip 
+                      contentStyle={{ 
+                        backgroundColor: 'var(--background)', 
+                        borderColor: 'var(--border)',
+                        borderRadius: '8px',
+                      }} 
+                    />
+                    <Legend wrapperStyle={{ paddingTop: '10px' }} />
+                    <Area
+                      type="monotone"
+                      dataKey="pageviews"
+                      name="Pageviews"
+                      stroke="var(--chart-4)"
+                      fill="var(--chart-4)"
+                      fillOpacity={0.3}
+                      animationDuration={1500}
+                    />
+                    <Area
+                      type="monotone"
+                      dataKey="sessions"
+                      name="Sessions"
+                      stroke="var(--chart-2)"
+                      fill="var(--chart-2)"
+                      fillOpacity={0.3}
+                      animationDuration={1500}
+                    />
+                    <Area
+                      type="monotone"
+                      dataKey="users"
+                      name="Users"
+                      stroke="var(--primary)"
+                      fill="var(--primary)"
+                      fillOpacity={0.3}
+                      animationDuration={1500}
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+            </TabsContent>
+            <TabsContent value="composed" className="mt-0">
+              <div className="h-[300px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <ComposedChart data={areaChartData} margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
+                    <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
+                    <XAxis dataKey="date" />
+                    <YAxis />
+                    <Tooltip 
+                      contentStyle={{ 
+                        backgroundColor: 'var(--background)', 
+                        borderColor: 'var(--border)',
+                        borderRadius: '8px',
+                      }} 
+                    />
+                    <Legend wrapperStyle={{ paddingTop: '10px' }} />
+                    <Area
+                      type="monotone"
+                      dataKey="pageviews"
+                      name="Pageviews"
+                      stroke="var(--chart-4)"
+                      fill="var(--chart-4)"
+                      fillOpacity={0.3}
+                      animationDuration={1500}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="sessions"
+                      name="Sessions"
+                      stroke="var(--chart-2)"
+                      strokeWidth={2}
+                      dot={{ r: 4 }}
+                      animationDuration={1500}
+                    />
+                    <Bar
+                      dataKey="users"
+                      name="Users"
+                      fill="var(--primary)"
+                      radius={[4, 4, 0, 0]}
+                      animationDuration={1500}
+                    />
+                  </ComposedChart>
+                </ResponsiveContainer>
+              </div>
+            </TabsContent>
+          </Tabs>
+        </CardContent>
+      </Card>
+
+      {/* Radial Bar Chart */}
+      <Card className="col-span-1 overflow-hidden">
+        <CardHeader className="pb-0">
+          <ChartToolbar title="Age Demographics" data={radialBarData} />
+        </CardHeader>
+        <CardContent className="p-0 sm:p-6">
+          <div className="h-[300px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <RadialBarChart 
+                data={radialBarData} 
+                innerRadius="20%" 
+                outerRadius="80%" 
+                startAngle={180} 
+                endAngle={0}
                 cx="50%"
                 cy="50%"
-                outerRadius={80}
-                innerRadius={40}
-                paddingAngle={2}
+                margin={{ top: 20, right: 20, bottom: 20, left: 20 }}
               >
-                {pieChartData.map((entry, index) => (
-                  <Cell 
-                    key={`cell-${index}`} 
-                    fill={COLORS[index % COLORS.length]} 
-                  />
-                ))}
-              </Pie>
-              <Tooltip formatter={(value) => `${value}%`} />
-              <Legend 
-                layout="vertical" 
-                verticalAlign="middle" 
-                align="right"
-                wrapperStyle={{ fontSize: '12px' }}
-              />
-            </PieChart>
-          </ChartContainer>
+                <RadialBar
+                  label={{ 
+                    fill: 'var(--foreground)', 
+                    position: 'insideStart', 
+                    fontSize: 12 
+                  }}
+                  background
+                  dataKey="value"
+                  animationDuration={1500}
+                >
+                  {radialBarData.map((entry, index) => (
+                    <Cell 
+                      key={`cell-${index}`} 
+                      fill={COLORS[index % COLORS.length]} 
+                    />
+                  ))}
+                </RadialBar>
+                <Legend 
+                  iconSize={10} 
+                  layout="horizontal" 
+                  verticalAlign="bottom" 
+                  align="center"
+                  wrapperStyle={{ paddingTop: '20px' }}
+                />
+                <Tooltip 
+                  contentStyle={{ 
+                    backgroundColor: 'var(--background)', 
+                    borderColor: 'var(--border)',
+                    borderRadius: '8px',
+                  }} 
+                  formatter={(value) => `${value}%`}
+                />
+              </RadialBarChart>
+            </ResponsiveContainer>
+          </div>
         </CardContent>
       </Card>
 
-      {/* Area Chart - New */}
-      <Card className="col-span-1 md:col-span-2">
-        <CardHeader>
-          <CardTitle>Website Analytics</CardTitle>
-          <CardDescription>Users, sessions and pageviews</CardDescription>
+      {/* Scatter Chart */}
+      <Card className="col-span-1 md:col-span-3 lg:col-span-3 overflow-hidden">
+        <CardHeader className="pb-0">
+          <ChartToolbar title="Product Performance" data={scatterData} />
         </CardHeader>
-        <CardContent>
-          <ChartContainer config={areaChartConfig} className="h-[300px]">
-            <AreaChart accessibilityLayer data={areaChartData}>
-              <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
-              <XAxis dataKey="date" />
-              <YAxis />
-              <ChartTooltip content={<ChartTooltipContent />} />
-              <ChartLegend content={<ChartLegendContent />} />
-              <Area
-                type="monotone"
-                dataKey="pageviews"
-                stackId="1"
-                stroke="var(--chart-4)"
-                fill="var(--chart-4)"
-                fillOpacity={0.6}
-              />
-              <Area
-                type="monotone"
-                dataKey="sessions"
-                stackId="1"
-                stroke="var(--chart-2)"
-                fill="var(--chart-2)"
-                fillOpacity={0.6}
-              />
-              <Area
-                type="monotone"
-                dataKey="users"
-                stackId="1"
-                stroke="var(--primary)"
-                fill="var(--primary)"
-                fillOpacity={0.6}
-              />
-            </AreaChart>
-          </ChartContainer>
-        </CardContent>
-      </Card>
-
-      {/* Radial Bar Chart - New */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Age Demographics</CardTitle>
-          <CardDescription>User age distribution</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <ChartContainer config={radialBarConfig} className="h-[300px]">
-            <RadialBarChart 
-              accessibilityLayer 
-              data={radialBarData} 
-              innerRadius="20%" 
-              outerRadius="90%" 
-              startAngle={180} 
-              endAngle={0}
-              cx="50%"
-              cy="60%"
-            >
-              <RadialBar
-                label={{ fill: 'var(--foreground)', position: 'insideStart', fontSize: 12 }}
-                background
-                dataKey="value"
-              >
-                {radialBarData.map((entry, index) => (
-                  <Cell 
-                    key={`cell-${index}`} 
-                    fill={COLORS[index % COLORS.length]} 
-                  />
-                ))}
-              </RadialBar>
-              <Legend 
-                iconSize={10} 
-                layout="horizontal" 
-                verticalAlign="top" 
-                align="center"
-                wrapperStyle={{ fontSize: '12px' }}
-              />
-              <Tooltip formatter={(value) => `${value}%`} />
-            </RadialBarChart>
-          </ChartContainer>
-        </CardContent>
-      </Card>
-
-      {/* Scatter Chart - New */}
-      <Card className="col-span-1 md:col-span-3">
-        <CardHeader>
-          <CardTitle>Product Performance</CardTitle>
-          <CardDescription>Price vs. Rating vs. Sales Volume</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <ChartContainer config={scatterConfig} className="h-[350px]">
-            <ScatterChart accessibilityLayer margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
-              <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
-              <XAxis 
-                type="number" 
-                dataKey="x" 
-                name="Price" 
-                unit="$"
-                label={{ value: 'Price ($)', position: 'insideBottom', offset: -10 }}
-              />
-              <YAxis 
-                type="number" 
-                dataKey="y" 
-                name="Rating" 
-                unit="/100"
-                label={{ value: 'Rating', angle: -90, position: 'insideLeft' }}
-              />
-              <Tooltip 
-                cursor={{ strokeDasharray: '3 3' }}
-                formatter={(value, name, props) => {
-                  if (name === 'z') return [`${value} units`, 'Sales Volume'];
-                  if (name === 'x') return [`$${value}`, 'Price'];
-                  if (name === 'y') return [`${value}/100`, 'Rating'];
-                  return [value, name];
-                }}
-              />
-              <Scatter 
-                name="Products" 
-                data={scatterData} 
-                fill="var(--primary)"
-              >
-                {scatterData.map((entry, index) => (
-                  <Cell 
-                    key={`cell-${index}`} 
-                    fill={COLORS[index % COLORS.length]} 
-                  />
-                ))}
-              </Scatter>
-              <Legend />
-            </ScatterChart>
-          </ChartContainer>
+        <CardContent className="p-0 sm:p-6">
+          <div className="h-[300px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
+                <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
+                <XAxis 
+                  type="number" 
+                  dataKey="x" 
+                  name="Price" 
+                  unit="$"
+                  label={{ value: 'Price ($)', position: 'insideBottom', offset: -10 }}
+                />
+                <YAxis 
+                  type="number" 
+                  dataKey="y" 
+                  name="Rating" 
+                  unit="/100"
+                  label={{ value: 'Rating', angle: -90, position: 'insideLeft' }}
+                />
+                <Tooltip 
+                  contentStyle={{ 
+                    backgroundColor: 'var(--background)', 
+                    borderColor: 'var(--border)',
+                    borderRadius: '8px',
+                  }} 
+                  cursor={{ strokeDasharray: '3 3' }}
+                  formatter={(value, name, props) => {
+                    if (name === 'z') return [`${value} units`, 'Sales Volume'];
+                    if (name === 'x') return [`$${value}`, 'Price'];
+                    if (name === 'y') return [`${value}/100`, 'Rating'];
+                    return [value, name];
+                  }}
+                />
+                <Scatter 
+                  name="Products" 
+                  data={scatterData} 
+                  fill="var(--primary)"
+                  animationDuration={1500}
+                >
+                  {scatterData.map((entry, index) => (
+                    <Cell 
+                      key={`cell-${index}`} 
+                      fill={COLORS[index % COLORS.length]} 
+                    />
+                  ))}
+                </Scatter>
+                <Legend 
+                  wrapperStyle={{ paddingTop: '10px' }}
+                />
+              </ScatterChart>
+            </ResponsiveContainer>
+          </div>
         </CardContent>
       </Card>
     </div>
   )
-} 
+}
