@@ -34,6 +34,10 @@ const DEFAULT_THEMES = [
     name: "Pink",
     value: "pink",
   },
+  {
+    name: "Ghibli",
+    value: "ghibli",
+  },
 ]
 
 const SCALED_THEMES = [
@@ -48,6 +52,10 @@ const SCALED_THEMES = [
   {
     name: "Pink",
     value: "pink-scaled",
+  },
+  {
+    name: "Ghibli",
+    value: "ghibli-scaled",
   },
 ]
 

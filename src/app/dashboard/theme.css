@@ -143,3 +143,101 @@
   --primary: var(--color-pink-500);
   --primary-foreground: var(--color-pink-50);
 }
+
+/* Ghibli theme */
+.theme-ghibli,
+.theme-ghibli-scaled {
+  --primary: #8C7C6D;
+  --primary-foreground: #FFFCF0;
+  --background: #F2EFE1;
+  --foreground: #594A42;
+  --card: #FFFCF0;
+  --card-foreground: #594A42;
+  --popover: #FFFCF0;
+  --popover-foreground: #594A42;
+  --secondary: #E6E2D7;
+  --secondary-foreground: #594A42;
+  --muted: #E6E2D7;
+  --muted-foreground: #8C7C6D;
+  --accent: #E6E2D7;
+  --accent-foreground: #594A42;
+  --destructive: #E76F51;
+  --border: #D1C9BC;
+  --input: #D1C9BC;
+  --ring: #8C7C6D;
+  --radius: 0.75rem;
+  --font-sans: var(--font-nunito);
+  
+  /* Chart colors for Ghibli theme */
+  --chart-1: #8C7C6D;
+  --chart-2: #A99985;
+  --chart-3: #C4B7A6;
+  --chart-4: #D1C9BC;
+  --chart-5: #E6E2D7;
+  
+  /* Sidebar colors for Ghibli theme */
+  --sidebar: #FFFCF0;
+  --sidebar-foreground: #594A42;
+  --sidebar-primary: #8C7C6D;
+  --sidebar-primary-foreground: #FFFCF0;
+  --sidebar-accent: #E6E2D7;
+  --sidebar-accent-foreground: #594A42;
+  --sidebar-border: #D1C9BC;
+  --sidebar-ring: #8C7C6D;
+}
+
+/* Dark mode for Ghibli theme */
+.dark .theme-ghibli,
+.dark .theme-ghibli-scaled {
+  --primary: #A99985;
+  --primary-foreground: #FFFCF0;
+  --background: #2C231E;
+  --foreground: #F2EFE1;
+  --card: #3D322B;
+  --card-foreground: #F2EFE1;
+  --popover: #3D322B;
+  --popover-foreground: #F2EFE1;
+  --secondary: #4A3E36;
+  --secondary-foreground: #F2EFE1;
+  --muted: #4A3E36;
+  --muted-foreground: #A99985;
+  --accent: #4A3E36;
+  --accent-foreground: #F2EFE1;
+  --destructive: #E76F51;
+  --border: rgba(242, 239, 225, 0.1);
+  --input: rgba(242, 239, 225, 0.15);
+  --ring: #A99985;
+  
+  /* Chart colors for dark Ghibli theme */
+  --chart-1: #A99985;
+  --chart-2: #8C7C6D;
+  --chart-3: #6D5D4B;
+  --chart-4: #594A42;
+  --chart-5: #4A3E36;
+  
+  /* Sidebar colors for dark Ghibli theme */
+  --sidebar: #3D322B;
+  --sidebar-foreground: #F2EFE1;
+  --sidebar-primary: #A99985;
+  --sidebar-primary-foreground: #F2EFE1;
+  --sidebar-accent: #4A3E36;
+  --sidebar-accent-foreground: #F2EFE1;
+  --sidebar-border: rgba(242, 239, 225, 0.1);
+  --sidebar-ring: #A99985;
+}
+
+/* Add paper texture only for Ghibli theme */
+.theme-ghibli .texture,
+.theme-ghibli-scaled .texture {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+  opacity: 0.3;
+}
+
+.dark .theme-ghibli .texture,
+.dark .theme-ghibli-scaled .texture {
+  opacity: 0.15;
+}

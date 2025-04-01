@@ -10,6 +10,7 @@ import { SiteHeader } from "@/app/dashboard/components/site-header"
 import { StickyNavbar } from "@/app/dashboard/components/sticky-navbar"
 import "@/app/dashboard/colors.css"
 import "@/app/dashboard/theme.css"
+import "@/app/dashboard/ghibli-texture.css"
 
 export default async function DashboardLayout({
   children,

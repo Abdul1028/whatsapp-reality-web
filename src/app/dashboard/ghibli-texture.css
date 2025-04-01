@@ -1,0 +1,35 @@
+/* This is optional - you can include this in theme.css instead */
+.theme-ghibli .texture,
+.theme-ghibli-scaled .texture {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+  opacity: 0.35;
+}
+
+.dark .theme-ghibli .texture,
+.dark .theme-ghibli-scaled .texture {
+  opacity: 0.2;
+}
+
+/* Additional styling for Ghibli theme */
+.theme-ghibli [data-slot="card"],
+.theme-ghibli-scaled [data-slot="card"] {
+  border-color: rgba(209, 201, 188, 0.5);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+/* Soften buttons in Ghibli theme */
+.theme-ghibli [data-slot="button"],
+.theme-ghibli-scaled [data-slot="button"] {
+  transition: all 0.2s ease;
+}
+
+/* Chart styling for Ghibli theme */
+.theme-ghibli .recharts-default-tooltip,
+.theme-ghibli-scaled .recharts-default-tooltip {
+  background-color: var(--card) !important;
+  border-color: var(--border) !important;
+} 

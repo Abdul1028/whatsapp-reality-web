@@ -1,19 +1,21 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Nunito } from "next/font/google";
+import { PT_Sans } from "next/font/google";
 import "./globals.css";
 import { cookies } from "next/headers";
 import { ActiveThemeProvider } from "@/components/active-theme";
 import { cn } from "@/lib/utils"
 import { ThemeProvider } from "next-themes";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const nunito = Nunito({
+  variable: "--font-nunito",
   subsets: ["latin"],
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const ptSans = PT_Sans({
+  variable: "--font-pt-sans",
   subsets: ["latin"],
+  weight: ["400", "700"],
 });
 
 export const metadata: Metadata = {
@@ -40,6 +42,7 @@ const isScaled = activeThemeValue?.endsWith("-scaled")
       "bg-background overscroll-none font-sans antialiased",
       activeThemeValue ? `theme-${activeThemeValue}` : "",
       isScaled ? "theme-scaled" : "",
+      `${nunito.variable} ${ptSans.variable}`,
     )}
       >
         <ThemeProvider
@@ -50,6 +53,7 @@ const isScaled = activeThemeValue?.endsWith("-scaled")
           enableColorScheme
         >
         <ActiveThemeProvider initialTheme={activeThemeValue}>
+          <div className="texture" />
           {children}
         </ActiveThemeProvider>
         </ThemeProvider>
