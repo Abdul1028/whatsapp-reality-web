@@ -22,20 +22,6 @@
   }
 }
 
-/* Default theme */
-.theme-default,
-.theme-default-scaled {
-  --primary: var(--color-neutral-600);
-  --primary-foreground: var(--color-neutral-50);
-}
-
-/* Dark mode for default theme */
-.dark .theme-default,
-.dark .theme-default-scaled {
-  --primary: var(--color-neutral-500);
-  --primary-foreground: var(--color-neutral-50);
-}
-
 /* Blue theme */
 .theme-blue,
 .theme-blue-scaled {
@@ -144,11 +130,39 @@
   --primary-foreground: var(--color-pink-50);
 }
 
+/* Terracotta theme */
+.theme-terracotta,
+.theme-terracotta-scaled {
+  --primary: #c7805a; /* Terracotta */
+  --primary-foreground: #fffcf9; /* Light foreground */
+}
+
+/* Dark mode for Terracotta theme */
+.dark .theme-terracotta,
+.dark .theme-terracotta-scaled {
+  --primary: #d1906f; /* Slightly lighter Terracotta for dark mode */
+  --primary-foreground: #4f3324; /* Dark foreground */
+}
+
+/* Ochre theme */
+.theme-ochre,
+.theme-ochre-scaled {
+  --primary: #c7a85a; /* Ochre */
+  --primary-foreground: #4d4023; /* Dark foreground */
+}
+
+/* Dark mode for Ochre theme */
+.dark .theme-ochre,
+.dark .theme-ochre-scaled {
+  --primary: #d1b36f; /* Slightly lighter Ochre */
+  --primary-foreground: #4d4023; /* Dark foreground */
+}
+
 /* Ghibli theme */
 .theme-ghibli,
 .theme-ghibli-scaled {
-  --primary: #8C7C6D;
-  --primary-foreground: #FFFCF0;
+  --primary: #a3a85e;
+  --primary-foreground: #FFFCF0; /* Corrected Ghibli foreground */
   --background: #F2EFE1;
   --foreground: #594A42;
   --card: #FFFCF0;
@@ -157,73 +171,30 @@
   --popover-foreground: #594A42;
   --secondary: #E6E2D7;
   --secondary-foreground: #594A42;
-  --muted: #E6E2D7;
-  --muted-foreground: #8C7C6D;
   --accent: #E6E2D7;
   --accent-foreground: #594A42;
-  --destructive: #E76F51;
-  --border: #D1C9BC;
-  --input: #D1C9BC;
-  --ring: #8C7C6D;
+  --muted: #E6E2D7;
+  --muted-foreground: #8C7C6D;
+  --destructive: #c7805a; /* Using Terracotta for destructive */
+  --destructive-foreground: #FFFCF0;
+  --border: #c7b894;
+  --input: #d1bf96;
+  --ring: #7f833a;
   --radius: 0.75rem;
   --font-sans: var(--font-nunito);
-  
-  /* Chart colors for Ghibli theme */
-  --chart-1: #8C7C6D;
-  --chart-2: #A99985;
-  --chart-3: #C4B7A6;
-  --chart-4: #D1C9BC;
-  --chart-5: #E6E2D7;
-  
-  /* Sidebar colors for Ghibli theme */
-  --sidebar: #FFFCF0;
-  --sidebar-foreground: #594A42;
-  --sidebar-primary: #8C7C6D;
+  --chart-1: #a3a85e;
+  --chart-2: #c7a85a;
+  --chart-3: #c7805a;
+  --chart-4: #a0b8c0;
+  --chart-5: #8C7C6D;
+  --sidebar: #e7d2a9;
+  --sidebar-foreground: #61450f;
+  --sidebar-primary: #a3a85e;
   --sidebar-primary-foreground: #FFFCF0;
-  --sidebar-accent: #E6E2D7;
-  --sidebar-accent-foreground: #594A42;
-  --sidebar-border: #D1C9BC;
-  --sidebar-ring: #8C7C6D;
-}
-
-/* Dark mode for Ghibli theme */
-.dark .theme-ghibli,
-.dark .theme-ghibli-scaled {
-  --primary: #A99985;
-  --primary-foreground: #FFFCF0;
-  --background: #2C231E;
-  --foreground: #F2EFE1;
-  --card: #3D322B;
-  --card-foreground: #F2EFE1;
-  --popover: #3D322B;
-  --popover-foreground: #F2EFE1;
-  --secondary: #4A3E36;
-  --secondary-foreground: #F2EFE1;
-  --muted: #4A3E36;
-  --muted-foreground: #A99985;
-  --accent: #4A3E36;
-  --accent-foreground: #F2EFE1;
-  --destructive: #E76F51;
-  --border: rgba(242, 239, 225, 0.1);
-  --input: rgba(242, 239, 225, 0.15);
-  --ring: #A99985;
-  
-  /* Chart colors for dark Ghibli theme */
-  --chart-1: #A99985;
-  --chart-2: #8C7C6D;
-  --chart-3: #6D5D4B;
-  --chart-4: #594A42;
-  --chart-5: #4A3E36;
-  
-  /* Sidebar colors for dark Ghibli theme */
-  --sidebar: #3D322B;
-  --sidebar-foreground: #F2EFE1;
-  --sidebar-primary: #A99985;
-  --sidebar-primary-foreground: #F2EFE1;
-  --sidebar-accent: #4A3E36;
-  --sidebar-accent-foreground: #F2EFE1;
-  --sidebar-border: rgba(242, 239, 225, 0.1);
-  --sidebar-ring: #A99985;
+  --sidebar-accent: #d1bf96;
+  --sidebar-accent-foreground: #61450f;
+  --sidebar-border: #c7b894;
+  --sidebar-ring: #7f833a;
 }
 
 /* Add paper texture only for Ghibli theme */
@@ -235,9 +206,4 @@
   pointer-events: none;
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
   opacity: 0.3;
-}
-
-.dark .theme-ghibli .texture,
-.dark .theme-ghibli-scaled .texture {
-  opacity: 0.15;
 }
