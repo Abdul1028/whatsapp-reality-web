@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState, useEffect } from "react"
-import { Bar, BarChart, CartesianGrid, Line, LineChart, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts"
+import { Bar, BarChart, CartesianGrid, Line, LineChart, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis, ComposedChart, Legend } from "recharts"
 import {
   Card,
   CardContent,
@@ -14,6 +14,8 @@ import {
   ChartTooltip,
   ChartTooltipContent,
   ChartConfig,
+  ChartLegend,
+  ChartLegendContent,
 } from "@/components/ui/chart"
 import { Button } from "@/components/ui/button"
 
@@ -105,6 +107,79 @@ const generatePieData = () => {
     ].filter(d => d.value > 0);
 }
 
+// Generate data for Stacked Bar Chart (e.g., Feature Usage per User)
+const generateStackedBarData = (userCount = 5, features = ["Analysis", "Visualize", "Sharing", "Export"]) => {
+  const data = [];
+  const usedNames = new Set<string>();
+
+  for (let i = 0; i < userCount; i++) {
+    let name = getRandomName();
+    while (usedNames.has(name)) {
+      name = getRandomName();
+    }
+    usedNames.add(name);
+
+    const userData: { user: string; [key: string]: number | string } = { user: name };
+    let totalUsage = 0;
+    features.forEach(feature => {
+      const usage = Math.floor(Math.random() * 50) + 5; // Random usage between 5 and 55
+      userData[feature] = usage;
+      totalUsage += usage;
+    });
+    // Optional: Add a total if needed, though not strictly necessary for stacking
+    // userData.total = totalUsage;
+    data.push(userData);
+  }
+  // Sort by a dominant feature or total if desired, e.g., by Analysis usage
+  return data.sort((a, b) => (b.Analysis as number) - (a.Analysis as number));
+};
+
+// Generate data for Composed Chart (Monthly Activity with Trend)
+const generateComposedData = (months = 12) => {
+  const data = [];
+  let date = new Date();
+  date.setMonth(date.getMonth() - months); // Start from 'months' ago
+  date.setDate(1); // Start at the beginning of the month
+
+  const messageData: number[] = [];
+  for (let i = 0; i < months; i++) {
+      messageData.push(Math.floor(Math.random() * 1000) + 50); // Random messages per month
+  }
+
+  for (let i = 0; i < months; i++) {
+    date.setMonth(date.getMonth() + 1);
+    const monthStr = date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+    const messages = messageData[i];
+
+    // Calculate a simple moving average for the trend (or just randomize)
+    let trend = null;
+    const windowSize = 3;
+    if (i >= windowSize - 1) {
+        let sum = 0;
+        for (let j = 0; j < windowSize; j++) {
+            sum += messageData[i - j];
+        }
+        trend = Math.round(sum / windowSize);
+    } else {
+        // Handle initial points - maybe use available data or keep null/0
+        let sum = 0;
+        for (let j = 0; j <= i; j++) {
+            sum += messageData[j];
+        }
+        trend = Math.round(sum / (i + 1)); // Average of available points
+    }
+    // Alternative: Simple random trend for demo
+    // const trend = Math.floor(Math.random() * 800) + 100;
+
+    data.push({
+      month: monthStr,
+      messages: messages,
+      trend: trend,
+    });
+  }
+  return data;
+};
+
 
 // --- Chart Components ---
 
@@ -160,6 +235,95 @@ function MessagesOverTimeChart({ data, chartConfig }: { data: ReturnType<typeof 
   )
 }
 
+// --- Stacked Bar Chart Component ---
+// Define keys based on the features in generateStackedBarData
+const stackedBarChartConfig = {
+  Analysis: { label: "Analysis", color: "hsl(var(--chart-1))" },
+  Visualize: { label: "Visualize", color: "hsl(var(--chart-2))" },
+  Sharing: { label: "Sharing", color: "hsl(var(--chart-3))" },
+  Export: { label: "Export", color: "hsl(var(--chart-4))" },
+  // Add more if needed, up to chart-5
+} satisfies ChartConfig;
+
+function FeatureUsageChart({ data, chartConfig }: { data: ReturnType<typeof generateStackedBarData>, chartConfig: ChartConfig }) {
+  return (
+    <ChartContainer config={chartConfig} className="min-h-[200px] w-full">
+      <BarChart accessibilityLayer data={data} margin={{ top: 5, right: 10, left: -20, bottom: 5 }}>
+        <CartesianGrid vertical={false} strokeDasharray="3 3" />
+        <XAxis
+          dataKey="user"
+          tickLine={false}
+          tickMargin={10}
+          axisLine={false}
+          // Angle ticks if names are long
+          // angle={-45}
+          // textAnchor="end"
+          // height={50} // Adjust height if ticks are angled
+        />
+        <YAxis tickLine={false} axisLine={false} tickMargin={10} />
+        <ChartTooltip
+            cursor={false}
+            content={<ChartTooltipContent />} // Default tooltip shows all stacked values
+        />
+        {/* Render a Bar for each key in the config, using the same stackId */}
+        {Object.entries(chartConfig).map(([key, config]) => (
+           <Bar
+             key={key}
+             dataKey={key}
+             fill={`var(--color-${key})`} // Use the color variable defined in the config
+             stackId="a" // All bars belong to the same stack
+             radius={[0, 0, 0, 0]} // Optional: Adjust radius for stacked appearance
+             // Apply top radius only to the last bar in the stack if desired
+             // radius={ index === Object.keys(chartConfig).length - 1 ? [4, 4, 0, 0] : [0, 0, 0, 0]}
+           />
+        ))}
+        {/* Add Legend */}
+        {/* <ChartLegend content={<ChartLegendContent />} /> */}
+      </BarChart>
+    </ChartContainer>
+  );
+}
+
+// --- Composed Chart Component (Bar + Line) ---
+const composedChartConfig = {
+  messages: { label: "Messages", color: "hsl(var(--chart-1))" },
+  trend: { label: "3-Month Trend", color: "hsl(var(--chart-2))" }, // Use a different color
+} satisfies ChartConfig;
+
+function MonthlyActivityChart({ data, chartConfig }: { data: ReturnType<typeof generateComposedData>, chartConfig: ChartConfig }) {
+  return (
+    <ChartContainer config={chartConfig} className="min-h-[200px] w-full">
+      {/* Use ComposedChart */}
+      <ComposedChart accessibilityLayer data={data} margin={{ top: 5, right: 10, left: -20, bottom: 5 }}>
+        <CartesianGrid vertical={false} strokeDasharray="3 3" />
+        <XAxis
+          dataKey="month"
+          tickLine={false}
+          tickMargin={10}
+          axisLine={false}
+          // tickFormatter={(value) => value.slice(0, 3)} // Abbreviate month if needed
+        />
+        <YAxis tickLine={false} axisLine={false} tickMargin={10} />
+        <ChartTooltip
+            cursor={false}
+            content={<ChartTooltipContent />} // Shows both values
+        />
+        {/* Add Legend */}
+        <ChartLegend content={<ChartLegendContent />} />
+        {/* Bar for messages */}
+        <Bar dataKey="messages" fill="var(--color-messages)" radius={4} barSize={20} />
+        {/* Line for trend */}
+        <Line
+            dataKey="trend"
+            type="monotone"
+            stroke="var(--color-trend)"
+            strokeWidth={2}
+            dot={false} // Hide dots on the trend line
+        />
+      </ComposedChart>
+    </ChartContainer>
+  );
+}
 
 
 // --- Main Rotating Chart Component ---
@@ -167,6 +331,8 @@ function MessagesOverTimeChart({ data, chartConfig }: { data: ReturnType<typeof 
 const chartComponents = [
   { Component: MessagesPerUserChart, generator: generateBarData, title: "Messages per User" },
   { Component: MessagesOverTimeChart, generator: generateLineData, title: "Daily Activity" },
+  { Component: FeatureUsageChart, generator: generateStackedBarData, title: "Feature Usage" },
+  { Component: MonthlyActivityChart, generator: generateComposedData, title: "Monthly Activity" },
 ]
 
 export function LandingHeroChart() {
@@ -232,6 +398,19 @@ export function LandingHeroChart() {
               label: "Messages",
               color: currentThemeColors['--chart-1']
           }
+      };
+  } else if (title === "Feature Usage") {
+      // Assign colors from the theme to the stacked bar config keys
+      dynamicConfig = {
+          Analysis: { label: "Analysis", color: currentThemeColors['--chart-1'] },
+          Visualize: { label: "Visualize", color: currentThemeColors['--chart-2'] },
+          Sharing: { label: "Sharing", color: currentThemeColors['--chart-3'] },
+          Export: { label: "Export", color: currentThemeColors['--chart-4'] },
+      };
+  } else if (title === "Monthly Activity") { // <-- Add config for the new chart
+      dynamicConfig = {
+          messages: { label: "Messages", color: currentThemeColors['--chart-1'] },
+          trend: { label: "3-Month Trend", color: currentThemeColors['--chart-2'] }, // Use chart-2 for trend line
       };
   }
   // Add logic here if you bring back the Pie chart, assigning colors for Text, Media, Links
