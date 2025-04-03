@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { MessageSquareText, BarChartBig, Users, ShieldCheck } from "lucide-react";
+import { MessageSquareText, BarChartBig, Users, ShieldCheck, Sparkles } from "lucide-react";
 import Navbar from "./Navbar";
 import {
   Card,
@@ -32,7 +32,7 @@ export default function Home() {
               <Link href="/dashboard">Analyze Your Chat Now</Link>
             </Button>
           </div>
-          <div className="hidden md:block">
+          <div className="mt-12 md:mt-0">
             <LandingHeroChart />
           </div>
         </div>
@@ -40,7 +40,7 @@ export default function Home() {
           <h2 className="text-3xl font-bold text-center mb-12 font-[--font-pt-sans]">
             Why Choose Us?
           </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
             <Card className="text-center">
               <CardHeader>
                 <BarChartBig className="h-10 w-10 text-primary/80 mx-auto mb-3" />
@@ -71,6 +71,17 @@ export default function Home() {
               <CardContent>
                 <p className="text-muted-foreground font-[--font-nunito]">
                   Your chat data is processed entirely in your browser. Nothing is uploaded to our servers.
+                </p>
+              </CardContent>
+            </Card>
+            <Card className="text-center">
+              <CardHeader>
+                <Sparkles className="h-10 w-10 text-primary/80 mx-auto mb-3" />
+                <CardTitle className="font-[--font-pt-sans]">Interactive Charts</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground font-[--font-nunito]">
+                  Experience modern, enhanced, and uniquely interactive visualizations of your chat data.
                 </p>
               </CardContent>
             </Card>
