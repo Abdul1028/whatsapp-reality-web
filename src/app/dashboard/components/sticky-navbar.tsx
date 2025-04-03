@@ -3,7 +3,8 @@
 import { useState } from "react"
 import { useTheme } from "next-themes"
 import { Button } from "@/components/ui/button"
-import { Moon, Sun, Menu, Search, Bell, User, Link } from "lucide-react"
+import { Moon, Sun, Menu, Search, Bell, User } from "lucide-react"
+import Link from "next/link"
 import { ThemeSelector } from "@/app/dashboard/components/theme-selector"
 import { SidebarTrigger } from "@/components/ui/sidebar"
 import { Input } from "@/components/ui/input"
@@ -99,8 +100,8 @@ export function StickyNavbar({ showSidebarTrigger = false }: { showSidebarTrigge
 
             <>
                 <SignedOut>
-                  <Button variant="outline" size="sm"><Link href="/sign-in">Login</Link></Button>
-                  <Button size="sm"><Link href="/sign-up">Signup</Link></Button>
+                  <Button variant="outline"><Link href="/sign-in">Login</Link></Button>
+                  <Button ><Link href="/sign-up">Signup</Link></Button>
                 </SignedOut>
                 <SignedIn>
                   <UserButton afterSignOutUrl="/" />
