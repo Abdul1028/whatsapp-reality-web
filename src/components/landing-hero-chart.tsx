@@ -20,7 +20,7 @@ import {
 import { Button } from "@/components/ui/button"
 
 // --- Chart Theme Definitions ---
-type ChartTheme = "default" | "blue" | "green" | "orange";
+type ChartTheme = "default" | "terracotta" | "ochre" | "orange";
 
 const chartThemes: Record<ChartTheme, Record<string, string>> = {
   default: {
@@ -30,21 +30,21 @@ const chartThemes: Record<ChartTheme, Record<string, string>> = {
     "--chart-4": "#a0b8c0", // Ghibli chart-4
     "--chart-5": "#8C7C6D", // Ghibli chart-5
   },
-  blue: {
-    "--chart-1": "hsl(221.2 83.2% 53.3%)", // Example Blue
-    "--chart-2": "hsl(215.4 70.5% 65.3%)",
-    "--chart-3": "hsl(210 60% 75%)",
-    "--chart-4": "hsl(205 50% 85%)",
-    "--chart-5": "hsl(200 40% 90%)",
+  terracotta: {
+    "--chart-1": "hsl(23, 55%, 57%)", // Base Terracotta
+    "--chart-2": "hsl(23, 50%, 67%)", // Lighter
+    "--chart-3": "hsl(23, 45%, 77%)", // Even Lighter
+    "--chart-4": "hsl(23, 40%, 87%)", // Very Light
+    "--chart-5": "hsl(23, 35%, 47%)", // Darker
   },
-  green: {
-    "--chart-1": "hsl(142.1 76.2% 36.3%)", // Example Green
-    "--chart-2": "hsl(145 65% 45%)",
-    "--chart-3": "hsl(150 55% 55%)",
-    "--chart-4": "hsl(155 45% 70%)",
-    "--chart-5": "hsl(160 35% 85%)",
+  ochre: {
+    "--chart-1": "hsl(45, 55%, 57%)", // Base Ochre
+    "--chart-2": "hsl(45, 50%, 67%)", // Lighter
+    "--chart-3": "hsl(45, 45%, 77%)", // Even Lighter
+    "--chart-4": "hsl(45, 40%, 87%)", // Very Light
+    "--chart-5": "hsl(45, 35%, 47%)", // Darker
   },
-    orange: {
+  orange: {
     "--chart-1": "hsl(24.6 95% 53.1%)", // Example Orange
     "--chart-2": "hsl(28 90% 60%)",
     "--chart-3": "hsl(32 85% 68%)",
