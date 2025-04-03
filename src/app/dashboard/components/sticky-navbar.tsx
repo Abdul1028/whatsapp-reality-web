@@ -13,7 +13,7 @@ import { Separator } from "@/components/ui/separator"
 import { useThemeConfig } from "@/components/active-theme"
 import { GhibliDarkModeWarningDialog } from "@/components/ui/ghibli-dark-mode-warning-dialog"
 
-export function StickyNavbar() {
+export function StickyNavbar({ showSidebarTrigger = false }: { showSidebarTrigger?: boolean }) {
   const { theme, setTheme, resolvedTheme } = useTheme()
   const { activeTheme } = useThemeConfig()
   const [isDialogOpen, setIsDialogOpen] = useState(false)
@@ -47,17 +47,17 @@ export function StickyNavbar() {
         <div className="flex h-16 items-center px-6">
           {/* Left section */}
           <div className="flex items-center gap-4">
-            <SidebarTrigger className="h-9 w-9 rounded-full hover:bg-muted transition-colors">
-              <Menu className="h-5 w-5" />
-            </SidebarTrigger>
-            
+            {showSidebarTrigger && (
+              <SidebarTrigger className="h-9 w-9 rounded-full hover:bg-muted transition-colors">
+                <Menu className="h-5 w-5" />
+              </SidebarTrigger>
+            )}
             <div className="hidden md:flex items-center gap-2">
               <span className="font-semibold text-lg bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
                 WIT-REALITY
               </span>
             </div>
           </div>
-          
           {/* Middle section - Search */}
           <div className="hidden md:flex flex-1 items-center justify-center px-6">
             <div className="relative w-full max-w-md">

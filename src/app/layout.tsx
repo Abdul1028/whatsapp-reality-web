@@ -54,7 +54,7 @@ const isScaled = activeThemeValue?.endsWith("-scaled")
         >
         <ActiveThemeProvider initialTheme={activeThemeValue}>
           <div className="texture" />
-          {children}
+            {children}
         </ActiveThemeProvider>
         </ThemeProvider>
       </body>

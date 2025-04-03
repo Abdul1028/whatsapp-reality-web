@@ -1,48 +1,61 @@
-import Image from "next/image";
-
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
+import { MessageSquareText, BarChartBig, Users } from "lucide-react";
+import { SidebarProvider } from "@/components/ui/sidebar";
+import Navbar from "./Navbar";
 export default function Home() {
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+    <>
+    <Navbar />
+<main className="flex min-h-screen flex-col items-center justify-center p-8 bg-gradient-to-b from-background to-muted/40">
+      <div className="container mx-auto flex flex-col items-center justify-center gap-12 px-4 py-16 text-center">
+        <MessageSquareText className="h-16 w-16 text-primary" strokeWidth={1.5} />
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="/dashboard"
+        <h1 className="text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl lg:text-7xl font-[--font-pt-sans]">
+          Unlock Insights from Your{" "}
+          <span className="text-primary">WhatsApp Chats</span>
+        </h1>
 
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            View Dashboard
-          </a>
+        <p className="max-w-2xl text-lg text-muted-foreground sm:text-xl font-[--font-nunito]">
+          Analyze, visualize, and understand your conversations like never
+          before. Discover activity patterns, identify key participants, and
+          gain valuable insights securely and privately.
+        </p>
 
+        <Button asChild size="lg" className="px-8 py-6 text-lg">
+          <Link href="/dashboard">Analyze Your Chat Now</Link>
+        </Button>
+
+        <div className="mt-16 grid grid-cols-1 gap-8 md:grid-cols-3 md:gap-12">
+          <div className="flex flex-col items-center gap-3">
+            <BarChartBig className="h-10 w-10 text-primary/80" />
+            <h3 className="text-xl font-semibold font-[--font-pt-sans]">Visualize Data</h3>
+            <p className="text-muted-foreground font-[--font-nunito]">
+              See charts of message frequency and activity times.
+            </p>
+          </div>
+          <div className="flex flex-col items-center gap-3">
+            <Users className="h-10 w-10 text-primary/80" />
+            <h3 className="text-xl font-semibold font-[--font-pt-sans]">Top Participants</h3>
+            <p className="text-muted-foreground font-[--font-nunito]">
+              Quickly identify the most active members in chats.
+            </p>
+          </div>
+          <div className="flex flex-col items-center gap-3">
+            <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-shield-check h-10 w-10 text-primary/80">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/>
+              <path d="m9 12 2 2 4-4"/>
+            </svg>
+            <h3 className="text-xl font-semibold font-[--font-pt-sans]">Privacy Focused</h3>
+            <p className="text-muted-foreground font-[--font-nunito]">
+              Your chat data is processed securely (add details if needed).
+            </p>
+          </div>
         </div>
+      </div>
       </main>
-    </div>
+    
+    </>
+
   );
 }
