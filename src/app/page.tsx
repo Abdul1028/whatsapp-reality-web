@@ -1,7 +1,6 @@
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { MessageSquareText, BarChartBig, Users, ShieldCheck } from "lucide-react";
-import { SidebarProvider } from "@/components/ui/sidebar";
 import Navbar from "./Navbar";
 import {
   Card,
@@ -10,6 +9,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { LandingHeroChart } from "@/components/landing-hero-chart";
 
 export default function Home() {
   return (
@@ -32,11 +32,8 @@ export default function Home() {
               <Link href="/dashboard">Analyze Your Chat Now</Link>
             </Button>
           </div>
-          <div className="hidden md:flex justify-center items-center aspect-square bg-muted/50 rounded-lg border border-border/50 shadow-sm p-8">
-            <div className="text-center text-muted-foreground">
-              <BarChartBig className="h-24 w-24 mx-auto mb-4 opacity-30" />
-              <p>(Visual representation of chat analysis)</p>
-            </div>
+          <div className="hidden md:block">
+            <LandingHeroChart />
           </div>
         </div>
         <div className="mb-16 md:mb-24">
