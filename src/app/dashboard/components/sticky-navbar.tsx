@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { useTheme } from "next-themes"
 import { Button } from "@/components/ui/button"
-import { Moon, Sun, Menu, Search, Bell, User } from "lucide-react"
+import { Moon, Sun, Menu, Search, Bell, User, Link } from "lucide-react"
 import { ThemeSelector } from "@/app/dashboard/components/theme-selector"
 import { SidebarTrigger } from "@/components/ui/sidebar"
 import { Input } from "@/components/ui/input"
@@ -12,6 +12,9 @@ import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { useThemeConfig } from "@/components/active-theme"
 import { GhibliDarkModeWarningDialog } from "@/components/ui/ghibli-dark-mode-warning-dialog"
+import { SignedOut } from "@clerk/nextjs"
+import { UserButton } from "@clerk/nextjs"
+import { SignedIn } from "@clerk/nextjs"
 
 export function StickyNavbar({ showSidebarTrigger = false }: { showSidebarTrigger?: boolean }) {
   const { theme, setTheme, resolvedTheme } = useTheme()
@@ -93,11 +96,16 @@ export function StickyNavbar({ showSidebarTrigger = false }: { showSidebarTrigge
                 3
               </Badge>
             </Button>
-            
-            <Avatar className="h-9 w-9 border-2 border-primary/10 hover:border-primary/30 transition-colors cursor-pointer">
-              <AvatarImage src="https://github.com/shadcn.png" alt="User" />
-              <AvatarFallback>CN</AvatarFallback>
-            </Avatar>
+
+            <>
+                <SignedOut>
+                  <Button variant="outline" size="sm"><Link href="/sign-in">Login</Link></Button>
+                  <Button size="sm"><Link href="/sign-up">Signup</Link></Button>
+                </SignedOut>
+                <SignedIn>
+                  <UserButton afterSignOutUrl="/" />
+                </SignedIn>
+              </> 
           </div>
         </div>
       </div>
