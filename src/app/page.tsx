@@ -29,7 +29,7 @@ export default function Home() {
               gain valuable insights securely and privately.
             </p>
             <Button asChild size="lg" className="px-8 py-6 text-lg mt-4">
-              <Link href="/dashboard">Analyze Your Chat Now</Link>
+              <Link href="/upload">Analyze Your Chat Now</Link>
             </Button>
           </div>
           <div className="mt-12 md:mt-0">

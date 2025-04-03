@@ -6,6 +6,7 @@ import { cookies } from "next/headers";
 import { ActiveThemeProvider } from "@/components/active-theme";
 import { cn } from "@/lib/utils"
 import { ThemeProvider } from "next-themes";
+import { Toaster } from "@/components/ui/sonner";
 
 const nunito = Nunito({
   variable: "--font-nunito",
@@ -55,6 +56,7 @@ const isScaled = activeThemeValue?.endsWith("-scaled")
         <ActiveThemeProvider initialTheme={activeThemeValue}>
           <div className="texture" />
             {children}
+            <Toaster richColors closeButton />
         </ActiveThemeProvider>
         </ThemeProvider>
       </body>
