@@ -1,61 +1,85 @@
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { MessageSquareText, BarChartBig, Users } from "lucide-react";
+import { MessageSquareText, BarChartBig, Users, ShieldCheck } from "lucide-react";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import Navbar from "./Navbar";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+
 export default function Home() {
   return (
     <>
-    <Navbar />
-<main className="flex min-h-screen flex-col items-center justify-center p-8 bg-gradient-to-b from-background to-muted/40">
-      <div className="container mx-auto flex flex-col items-center justify-center gap-12 px-4 py-16 text-center">
-        <MessageSquareText className="h-16 w-16 text-primary" strokeWidth={1.5} />
-
-        <h1 className="text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl lg:text-7xl font-[--font-pt-sans]">
-          Unlock Insights from Your{" "}
-          <span className="text-primary">WhatsApp Chats</span>
-        </h1>
-
-        <p className="max-w-2xl text-lg text-muted-foreground sm:text-xl font-[--font-nunito]">
-          Analyze, visualize, and understand your conversations like never
-          before. Discover activity patterns, identify key participants, and
-          gain valuable insights securely and privately.
-        </p>
-
-        <Button asChild size="lg" className="px-8 py-6 text-lg">
-          <Link href="/dashboard">Analyze Your Chat Now</Link>
-        </Button>
-
-        <div className="mt-16 grid grid-cols-1 gap-8 md:grid-cols-3 md:gap-12">
-          <div className="flex flex-col items-center gap-3">
-            <BarChartBig className="h-10 w-10 text-primary/80" />
-            <h3 className="text-xl font-semibold font-[--font-pt-sans]">Visualize Data</h3>
-            <p className="text-muted-foreground font-[--font-nunito]">
-              See charts of message frequency and activity times.
+      <Navbar />
+      <div className="container mx-auto px-4 py-16 md:py-24 lg:py-32">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-16 items-center mb-24 md:mb-32">
+          <div className="flex flex-col gap-6 items-center md:items-start text-center md:text-left">
+            <MessageSquareText className="h-14 w-14 md:h-16 md:w-16 text-primary" strokeWidth={1.5} />
+            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight font-[--font-pt-sans]">
+              Unlock Insights from Your{" "}
+              <span className="text-primary">WhatsApp Chats</span>
+            </h1>
+            <p className="text-lg text-muted-foreground max-w-lg font-[--font-nunito]">
+              Analyze, visualize, and understand your conversations like never
+              before. Discover activity patterns, identify key participants, and
+              gain valuable insights securely and privately.
             </p>
+            <Button asChild size="lg" className="px-8 py-6 text-lg mt-4">
+              <Link href="/dashboard">Analyze Your Chat Now</Link>
+            </Button>
           </div>
-          <div className="flex flex-col items-center gap-3">
-            <Users className="h-10 w-10 text-primary/80" />
-            <h3 className="text-xl font-semibold font-[--font-pt-sans]">Top Participants</h3>
-            <p className="text-muted-foreground font-[--font-nunito]">
-              Quickly identify the most active members in chats.
-            </p>
+          <div className="hidden md:flex justify-center items-center aspect-square bg-muted/50 rounded-lg border border-border/50 shadow-sm p-8">
+            <div className="text-center text-muted-foreground">
+              <BarChartBig className="h-24 w-24 mx-auto mb-4 opacity-30" />
+              <p>(Visual representation of chat analysis)</p>
+            </div>
           </div>
-          <div className="flex flex-col items-center gap-3">
-            <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-shield-check h-10 w-10 text-primary/80">
-              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/>
-              <path d="m9 12 2 2 4-4"/>
-            </svg>
-            <h3 className="text-xl font-semibold font-[--font-pt-sans]">Privacy Focused</h3>
-            <p className="text-muted-foreground font-[--font-nunito]">
-              Your chat data is processed securely (add details if needed).
-            </p>
+        </div>
+        <div className="mb-16 md:mb-24">
+          <h2 className="text-3xl font-bold text-center mb-12 font-[--font-pt-sans]">
+            Why Choose Us?
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+            <Card className="text-center">
+              <CardHeader>
+                <BarChartBig className="h-10 w-10 text-primary/80 mx-auto mb-3" />
+                <CardTitle className="font-[--font-pt-sans]">Visualize Data</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground font-[--font-nunito]">
+                  See charts of message frequency, activity times, and more in an intuitive dashboard.
+                </p>
+              </CardContent>
+            </Card>
+            <Card className="text-center">
+              <CardHeader>
+                <Users className="h-10 w-10 text-primary/80 mx-auto mb-3" />
+                <CardTitle className="font-[--font-pt-sans]">Top Participants</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground font-[--font-nunito]">
+                  Quickly identify the most active members and key contributors in your group chats.
+                </p>
+              </CardContent>
+            </Card>
+            <Card className="text-center">
+              <CardHeader>
+                <ShieldCheck className="h-10 w-10 text-primary/80 mx-auto mb-3" />
+                <CardTitle className="font-[--font-pt-sans]">Privacy Focused</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground font-[--font-nunito]">
+                  Your chat data is processed entirely in your browser. Nothing is uploaded to our servers.
+                </p>
+              </CardContent>
+            </Card>
           </div>
         </div>
       </div>
-      </main>
-    
     </>
-
   );
 }
