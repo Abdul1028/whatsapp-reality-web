@@ -14,6 +14,9 @@ import { Bell } from 'lucide-react'
 import { useTheme } from 'next-themes'
 import { useThemeConfig } from '@/components/active-theme'
 import { Moon, Sun } from 'lucide-react'
+import Link from "next/link";
+import { UserButton, SignedIn, SignedOut } from "@clerk/nextjs";
+import { MessageSquareText } from "lucide-react";
 
 function Navbar() {
   const { theme, setTheme, resolvedTheme } = useTheme()
@@ -55,7 +58,7 @@ function Navbar() {
           {/* Left section */}
           <div className="flex items-center gap-2">
             <span className="font-semibold text-lg bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
-              WIT-REALITY
+            <Link href="/">WIT-REALITY</Link>
             </span>
           </div>
 
@@ -83,8 +86,13 @@ function Navbar() {
 
             {mounted && (
               <>
-                <Button variant="outline" size="sm">Login</Button>
-                <Button size="sm">Signup</Button>
+                <SignedOut>
+                  <Button variant="outline" size="sm"><Link href="/sign-in">Login</Link></Button>
+                  <Button size="sm"><Link href="/sign-up">Signup</Link></Button>
+                </SignedOut>
+                <SignedIn>
+                  <UserButton afterSignOutUrl="/" />
+                </SignedIn>
               </>
             )}
             {!mounted && (

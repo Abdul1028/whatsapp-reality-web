@@ -7,6 +7,7 @@ import { ActiveThemeProvider } from "@/components/active-theme";
 import { cn } from "@/lib/utils"
 import { ThemeProvider } from "next-themes";
 import { Toaster } from "@/components/ui/sonner";
+import { ClerkProvider } from '@clerk/nextjs'
 
 const nunito = Nunito({
   variable: "--font-nunito",
@@ -37,8 +38,9 @@ const isScaled = activeThemeValue?.endsWith("-scaled")
 
   
   return (
-    <html lang="en" suppressHydrationWarning >
-      <body
+    <ClerkProvider>
+      <html lang="en" suppressHydrationWarning >
+        <body
      className={cn(
       "bg-background overscroll-none font-sans antialiased",
       activeThemeValue ? `theme-${activeThemeValue}` : "",
@@ -61,5 +63,6 @@ const isScaled = activeThemeValue?.endsWith("-scaled")
         </ThemeProvider>
       </body>
     </html>
+    </ClerkProvider>
   );
 }
