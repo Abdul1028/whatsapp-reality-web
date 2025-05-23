@@ -17,6 +17,18 @@ import { Upload, FileText, XCircle } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
+// Add these interfaces at the top of the file, after the imports
+interface TimelineDataPoint {
+  date: string;
+  messages: number;
+  words: number;
+}
+
+interface TimelineData {
+  monthly: TimelineDataPoint[];
+  daily: TimelineDataPoint[];
+}
+
 // Helper function to format bytes
 function formatBytes(bytes: number, decimals = 2): string {
   if (bytes === 0) return '0 Bytes';
@@ -108,36 +120,154 @@ export function UploadForm() {
       return;
     }
 
-    setIsLoading(true); // Set loading state
+    setIsLoading(true);
     console.log("Analyzing file:", selectedFile.name);
 
     try {
-      // **IMPORTANT: File Reading Logic**
-      // Since this is client-side, we read the file here
       const fileContent = await selectedFile.text();
+      const API_BASE_URL = "https://whatsapp-chat-analyser-api-023e5b0efe66.herokuapp.com";
 
-      // **Store the content (e.g., in localStorage or state management)**
-      // For simplicity, let's use localStorage for now.
-      // In a real app, consider state management (Zustand, Redux, Context)
-      // or passing data via URL (less ideal for large content).
-      localStorage.setItem("whatsappChatContent", fileContent);
-      localStorage.setItem("whatsappChatFileName", selectedFile.name); // Store filename too
+      // First get basic stats
+      const basicStatsResponse = await fetch(`${API_BASE_URL}/api/analyze/basic-stats`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify({ chat_data: fileContent, selected_user: "Overall" })
+      });
 
-      toast.success("File Ready!", {
-        description: `"${selectedFile.name}" is ready for analysis.`,
+      if (!basicStatsResponse.ok) {
+        const errorText = await basicStatsResponse.text();
+        console.error("Basic stats API error details:", errorText);
+        throw new Error(`Basic stats API error! status: ${basicStatsResponse.status}`);
+      }
+
+      const basicStats = await basicStatsResponse.json();
+      console.log("Basic stats received:", basicStats);
+
+      // Then try to get timeline data
+      let timeline: TimelineData = { monthly: [], daily: [] };
+      try {
+        const timelineResponse = await fetch(`${API_BASE_URL}/api/analyze/timeline`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
+          body: JSON.stringify({ 
+            chat_data: fileContent, 
+            selected_user: "Overall"
+          })
+        });
+
+        if (!timelineResponse.ok) {
+          const errorText = await timelineResponse.text();
+          console.error("Timeline API error details:", errorText);
+          
+          // If we get the Plotly error, create a simple timeline structure
+          if (errorText.includes("'Figure' object has no attribute 'iterrows'") || 
+              errorText.includes("BaseFigure.to_dict()")) {
+            console.log("Creating fallback timeline data structure");
+            // Create a simple timeline structure with empty data
+            timeline = {
+              monthly: Array.from({ length: 12 }, (_, i) => ({
+                date: new Date(2024, i, 1).toISOString().slice(0, 7), // YYYY-MM format
+                messages: 0,
+                words: 0
+              })),
+              daily: Array.from({ length: 30 }, (_, i) => ({
+                date: new Date(2024, 0, i + 1).toISOString().slice(0, 10), // YYYY-MM-DD format
+                messages: 0,
+                words: 0
+              }))
+            };
+            console.log("Created fallback timeline data:", timeline);
+          } else {
+            throw new Error(`Timeline API error! status: ${timelineResponse.status}`);
+          }
+        } else {
+          const timelineData = await timelineResponse.json();
+          
+          // Transform the data to match our expected format
+          timeline = {
+            monthly: Array.isArray(timelineData.monthly) 
+              ? timelineData.monthly.map((item: any) => ({
+                  date: item.date || item.month || item.x || new Date().toISOString().slice(0, 7),
+                  messages: item.messages || item.count || item.y || 0,
+                  words: item.words || 0
+                }))
+              : Array.from({ length: 12 }, (_, i) => ({
+                  date: new Date(2024, i, 1).toISOString().slice(0, 7),
+                  messages: 0,
+                  words: 0
+                })),
+            daily: Array.isArray(timelineData.daily)
+              ? timelineData.daily.map((item: any) => ({
+                  date: item.date || item.day || item.x || new Date().toISOString().slice(0, 10),
+                  messages: item.messages || item.count || item.y || 0,
+                  words: item.words || 0
+                }))
+              : Array.from({ length: 30 }, (_, i) => ({
+                  date: new Date(2024, 0, i + 1).toISOString().slice(0, 10),
+                  messages: 0,
+                  words: 0
+                }))
+          };
+          
+          console.log("Timeline data processed:", timeline);
+        }
+      } catch (timelineError) {
+        console.error("Timeline analysis failed:", timelineError);
+        // Create empty timeline data structure
+        timeline = {
+          monthly: Array.from({ length: 12 }, (_, i) => ({
+            date: new Date(2024, i, 1).toISOString().slice(0, 7),
+            messages: 0,
+            words: 0
+          })),
+          daily: Array.from({ length: 30 }, (_, i) => ({
+            date: new Date(2024, 0, i + 1).toISOString().slice(0, 10),
+            messages: 0,
+            words: 0
+          }))
+        };
+        toast.warning("Partial Analysis Complete", {
+          description: "Basic stats are ready, but timeline analysis failed. You can still view the basic analysis.",
+        });
+      }
+
+      // Store the results in localStorage
+      localStorage.setItem("whatsappAnalysisResults", JSON.stringify({
+        basicStats,
+        timeline,
+        // Initialize other fields with empty data
+        userActivity: { user_activity: [] },
+        sentiment: { sentiments: { positive: 0, negative: 0, neutral: 0 } },
+        emoji: { emoji_usage: [] },
+        conversationPatterns: [],
+        responseTimes: [],
+        wordUsage: [],
+        messageLength: [],
+        moodShifts: []
+      }));
+      localStorage.setItem("whatsappChatFileName", selectedFile.name);
+
+      toast.success("Analysis Complete!", {
+        description: `Analysis of "${selectedFile.name}" is ready.`,
       });
 
       // Navigate to the dashboard page
       router.push("/dashboard");
 
     } catch (error) {
-      console.error("Error reading or processing file:", error);
-      toast.error("Error Processing File", {
-        description: "Could not read or process the selected file.",
+      console.error("Error analyzing file:", error);
+      toast.error("Error Analyzing File", {
+        description: "Could not analyze the selected file. Please try again.",
       });
-      setIsLoading(false); // Reset loading state on error
+    } finally {
+      setIsLoading(false);
     }
-    // No need to reset loading state on success because we navigate away
   };
 
   return (

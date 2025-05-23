@@ -105,6 +105,13 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card"
 
 export const schema = z.object({
   id: z.number(),
@@ -803,5 +810,48 @@ function TableCellViewer({ item }: { item: z.infer<typeof schema> }) {
         </DrawerFooter>
       </DrawerContent>
     </Drawer>
+  )
+}
+
+interface UserActivity {
+  user: string
+  messages: number
+  percentage: number
+}
+
+interface DataTableProps {
+  data: UserActivity[]
+}
+
+export function UserActivityDataTable({ data }: DataTableProps) {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>User Activity</CardTitle>
+        <CardDescription>
+          Message distribution among chat participants
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>User</TableHead>
+              <TableHead className="text-right">Messages</TableHead>
+              <TableHead className="text-right">Percentage</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {data.map((user) => (
+              <TableRow key={user.user}>
+                <TableCell className="font-medium">{user.user}</TableCell>
+                <TableCell className="text-right">{user.messages}</TableCell>
+                <TableCell className="text-right">{user.percentage.toFixed(1)}%</TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </CardContent>
+    </Card>
   )
 }
