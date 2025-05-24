@@ -3,7 +3,6 @@
 import React, { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { DashboardCharts } from '@/app/dashboard/components/dashboard-charts';
-import { AnalysisCharts } from '@/app/dashboard/components/analysis-charts';
 import { RawDataTable } from '@/app/dashboard/components/raw-data-table';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -431,13 +430,6 @@ export default function DashboardPage() {
       <h1 className="text-3xl font-bold mb-2">Chat Analysis Dashboard</h1>
       <p className="text-muted-foreground mb-6">Results for: <span className='text-primary font-semibold'>{chatFileName}</span></p>
       {error && <p className="text-destructive text-center mb-4">Note: There was an issue loading some parts of the data: {error}</p>} 
-
-      <div className="mb-8">
-        <AnalysisCharts
-          wordUsageData={analysisResults.wordUsage} 
-          userActivityData={analysisResults.userActivity?.user_activity} 
-        />
-      </div>
 
       <Suspense fallback={
         <div className="flex items-center justify-center min-h-[300px]">
