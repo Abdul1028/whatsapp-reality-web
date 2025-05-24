@@ -13,21 +13,37 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Upload, FileText, XCircle } from "lucide-react";
+import { Upload, FileText, XCircle, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
-// Add these interfaces at the top of the file, after the imports
-interface TimelineDataPoint {
+// --- Data Structure Interfaces (Kept for reference, DataFrameRow might be used by dashboard) ---
+export interface DataFrameRow { 
   date: string;
-  messages: number;
-  words: number;
+  user: string;
+  message: string;
+  "Message Length": number;
+  "Conv code": number | null;
+  "Conv change": boolean;
+  "Is reply": boolean;
+  "Sender change": boolean;
+  [userColumn: string]: number | string | boolean | null;
+  only_date: string;
+  year: number;
+  month_num: number;
+  month: string;
+  day: number;
+  day_name: string;
+  hour: number;
+  minute: number;
+  period: string;
+  "Reply Time": number;
+  "Inter conv time": number;
 }
 
-interface TimelineData {
-  monthly: TimelineDataPoint[];
-  daily: TimelineDataPoint[];
-}
+// Other interfaces (BasicStatsData, UserActivityData etc.) are removed from here 
+// as their primary role was for localStorage population, which is changing.
+// --- End of Data Structure Interfaces ---
 
 // Helper function to format bytes
 function formatBytes(bytes: number, decimals = 2): string {
@@ -41,40 +57,34 @@ function formatBytes(bytes: number, decimals = 2): string {
 
 export function UploadForm() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [isLoading, setIsLoading] = useState(false); // Optional: for loading state
-  const [isDragging, setIsDragging] = useState(false); // State for drag-over visual feedback
+  const [isLoading, setIsLoading] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
   const router = useRouter();
-  const fileInputRef = useRef<HTMLInputElement>(null); // Ref for hidden input
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Extracted file processing logic
   const processFile = useCallback((file: File | null) => {
     if (!file) {
       setSelectedFile(null);
       return;
     }
-
-    // Validation
     if (file.type !== "text/plain") {
       toast.error("Invalid File Type", {
         description: "Please upload a .txt file.",
       });
       setSelectedFile(null);
-      // Clear the hidden input if it was used
       if (fileInputRef.current) {
         fileInputRef.current.value = "";
       }
       return;
     }
-
     setSelectedFile(file);
     console.log("Selected file:", file.name);
-  }, []); // Empty dependency array as it doesn't depend on external state/props
+  }, []);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     processFile(event.target.files?.[0] ?? null);
   };
 
-  // Drag and Drop Handlers
   const handleDragEnter = (event: React.DragEvent<HTMLDivElement>) => {
     event.preventDefault();
     setIsDragging(true);
@@ -86,8 +96,8 @@ export function UploadForm() {
   };
 
   const handleDragOver = (event: React.DragEvent<HTMLDivElement>) => {
-    event.preventDefault(); // Necessary to allow dropping
-    setIsDragging(true); // Keep dragging state active
+    event.preventDefault();
+    setIsDragging(true);
   };
 
   const handleDrop = (event: React.DragEvent<HTMLDivElement>) => {
@@ -95,20 +105,18 @@ export function UploadForm() {
     setIsDragging(false);
     const files = event.dataTransfer.files;
     if (files && files.length > 0) {
-      processFile(files[0]); // Process the first dropped file
+      processFile(files[0]);
     }
   };
 
-  // Function to trigger hidden file input click
   const triggerFileInput = () => {
     fileInputRef.current?.click();
   };
 
-  // Function to clear the selected file
   const clearFile = () => {
     setSelectedFile(null);
     if (fileInputRef.current) {
-      fileInputRef.current.value = ""; // Clear the actual input element
+      fileInputRef.current.value = "";
     }
   };
 
@@ -121,243 +129,147 @@ export function UploadForm() {
     }
 
     setIsLoading(true);
-    console.log("Analyzing file:", selectedFile.name);
+    console.log("Starting analysis for file:", selectedFile.name);
+    toast.loading("Processing chat file...", { id: "processing-toast" });
 
     try {
       const fileContent = await selectedFile.text();
-      const API_BASE_URL = "https://whatsapp-chat-analyser-api-023e5b0efe66.herokuapp.com";
-
-      // First get basic stats
-      const basicStatsResponse = await fetch(`${API_BASE_URL}/api/analyze/basic-stats`, {
+      const response = await fetch('/api/process-chat', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        },
-        body: JSON.stringify({ chat_data: fileContent, selected_user: "Overall" })
+        headers: { 'Content-Type': 'text/plain' },
+        body: fileContent,
       });
 
-      if (!basicStatsResponse.ok) {
-        const errorText = await basicStatsResponse.text();
-        console.error("Basic stats API error details:", errorText);
-        throw new Error(`Basic stats API error! status: ${basicStatsResponse.status}`);
+      const result = await response.json();
+
+      if (!response.ok) {
+        console.error("Error from /api/process-chat:", result);
+        toast.error("Processing Failed", {
+          id: "processing-toast",
+          description: result.error || `API Error: ${response.status}`,
+        });
+        throw new Error(result.error || `API Error: ${response.status}`);
       }
 
-      const basicStats = await basicStatsResponse.json();
-      console.log("Basic stats received:", basicStats);
+      // --- Data storage changes --- 
+      // No longer storing full processedData in localStorage to avoid QuotaExceededError
+      // No longer calculating basicStats or userActivity here.
+      
+      // Clear potentially large old items from localStorage
+      localStorage.removeItem("parsedChatData");
+      localStorage.removeItem("basicStats"); 
+      localStorage.removeItem("userActivity");
+      // For broader compatibility, clear the old umbrella key too if it exists
+      localStorage.removeItem("whatsappAnalysisResults"); 
 
-      // Then try to get timeline data
-      let timeline: TimelineData = { monthly: [], daily: [] };
-      try {
-        const timelineResponse = await fetch(`${API_BASE_URL}/api/analyze/timeline`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
-          },
-          body: JSON.stringify({ 
-            chat_data: fileContent, 
-            selected_user: "Overall"
-          })
+      // Store only the identifier and necessary metadata
+      if (!result.dataId) {
+        console.error("API did not return a dataId:", result);
+        toast.error("Processing Error", {
+          id: "processing-toast",
+          description: "Could not retrieve a data identifier from the server.",
         });
-
-        if (!timelineResponse.ok) {
-          const errorText = await timelineResponse.text();
-          console.error("Timeline API error details:", errorText);
-          
-          // If we get the Plotly error, create a simple timeline structure
-          if (errorText.includes("'Figure' object has no attribute 'iterrows'") || 
-              errorText.includes("BaseFigure.to_dict()")) {
-            console.log("Creating fallback timeline data structure");
-            // Create a simple timeline structure with empty data
-            timeline = {
-              monthly: Array.from({ length: 12 }, (_, i) => ({
-                date: new Date(2024, i, 1).toISOString().slice(0, 7), // YYYY-MM format
-                messages: 0,
-                words: 0
-              })),
-              daily: Array.from({ length: 30 }, (_, i) => ({
-                date: new Date(2024, 0, i + 1).toISOString().slice(0, 10), // YYYY-MM-DD format
-                messages: 0,
-                words: 0
-              }))
-            };
-            console.log("Created fallback timeline data:", timeline);
-          } else {
-            throw new Error(`Timeline API error! status: ${timelineResponse.status}`);
-          }
-        } else {
-          const timelineData = await timelineResponse.json();
-          
-          // Transform the data to match our expected format
-          timeline = {
-            monthly: Array.isArray(timelineData.monthly) 
-              ? timelineData.monthly.map((item: any) => ({
-                  date: item.date || item.month || item.x || new Date().toISOString().slice(0, 7),
-                  messages: item.messages || item.count || item.y || 0,
-                  words: item.words || 0
-                }))
-              : Array.from({ length: 12 }, (_, i) => ({
-                  date: new Date(2024, i, 1).toISOString().slice(0, 7),
-                  messages: 0,
-                  words: 0
-                })),
-            daily: Array.isArray(timelineData.daily)
-              ? timelineData.daily.map((item: any) => ({
-                  date: item.date || item.day || item.x || new Date().toISOString().slice(0, 10),
-                  messages: item.messages || item.count || item.y || 0,
-                  words: item.words || 0
-                }))
-              : Array.from({ length: 30 }, (_, i) => ({
-                  date: new Date(2024, 0, i + 1).toISOString().slice(0, 10),
-                  messages: 0,
-                  words: 0
-                }))
-          };
-          
-          console.log("Timeline data processed:", timeline);
-        }
-      } catch (timelineError) {
-        console.error("Timeline analysis failed:", timelineError);
-        // Create empty timeline data structure
-        timeline = {
-          monthly: Array.from({ length: 12 }, (_, i) => ({
-            date: new Date(2024, i, 1).toISOString().slice(0, 7),
-            messages: 0,
-            words: 0
-          })),
-          daily: Array.from({ length: 30 }, (_, i) => ({
-            date: new Date(2024, 0, i + 1).toISOString().slice(0, 10),
-            messages: 0,
-            words: 0
-          }))
-        };
-        toast.warning("Partial Analysis Complete", {
-          description: "Basic stats are ready, but timeline analysis failed. You can still view the basic analysis.",
-        });
+        throw new Error("Missing dataId from API response");
       }
 
-      // Store the results in localStorage
-      localStorage.setItem("whatsappAnalysisResults", JSON.stringify({
-        basicStats,
-        timeline,
-        // Initialize other fields with empty data
-        userActivity: { user_activity: [] },
-        sentiment: { sentiments: { positive: 0, negative: 0, neutral: 0 } },
-        emoji: { emoji_usage: [] },
-        conversationPatterns: [],
-        responseTimes: [],
-        wordUsage: [],
-        messageLength: [],
-        moodShifts: []
-      }));
+      localStorage.setItem("chatAnalysisId", result.dataId);
+      localStorage.setItem("chatMessageCount", result.processedMessagesCount?.toString() || "0");
       localStorage.setItem("whatsappChatFileName", selectedFile.name);
 
-      toast.success("Analysis Complete!", {
-        description: `Analysis of "${selectedFile.name}" is ready.`,
+      console.log(`Stored dataId: ${result.dataId}, Count: ${result.processedMessagesCount}`);
+      toast.success("Processing Complete!", {
+        id: "processing-toast",
+        description: `Successfully processed ${result.processedMessagesCount} messages. Redirecting to dashboard...`,
       });
 
-      // Navigate to the dashboard page
-      router.push("/dashboard");
-
+      // Navigate to dashboard with dataId as a query parameter
+      router.push(`/dashboard?id=${result.dataId}`);
+      
     } catch (error) {
-      console.error("Error analyzing file:", error);
-      toast.error("Error Analyzing File", {
-        description: "Could not analyze the selected file. Please try again.",
-      });
-    } finally {
       setIsLoading(false);
-    }
+      const errorMessage = error instanceof Error ? error.message : "An unknown error occurred during analysis.";
+      console.error("Error during analysis:", error);
+      toast.error("Analysis Failed", {
+        id: "processing-toast", // Ensure existing toast is updated or dismissed
+        description: errorMessage,
+      });
+    } 
+    // setIsLoading(false); // isLoading should be set to false after navigation or in case of error
+                         // router.push will unmount this component, so setting isLoading might not be strictly necessary if navigation is successful
   };
 
   return (
-    <Card>
+    <Card 
+      className={cn(
+        "w-full max-w-lg mx-auto",
+        isDragging && "border-primary ring-2 ring-primary/50"
+      )}
+      onDragEnter={handleDragEnter}
+      onDragLeave={handleDragLeave}
+      onDragOver={handleDragOver}
+      onDrop={handleDrop}
+    >
       <CardHeader>
-        <CardTitle className="font-[--font-pt-sans]">Upload File</CardTitle>
-        <CardDescription className="font-[--font-nunito]">
-          Drag & drop or click to select the exported `.txt` chat file.
+        <CardTitle className="text-2xl">Upload Chat File</CardTitle>
+        <CardDescription>
+          Select a .txt chat export file to analyze. Your data is processed locally in your browser.
         </CardDescription>
       </CardHeader>
-      <CardContent>
-        {/* Hidden actual file input */}
-        <Input
-          ref={fileInputRef}
-          id="chatfile-hidden"
-          type="file"
-          accept=".txt"
-          onChange={handleFileChange}
-          disabled={isLoading}
-          className="hidden" // Hide the default input
-        />
-
-        {/* Visible Drop Zone / File Info Area */}
-        <div
-          className={cn(
-            "flex flex-col items-center justify-center w-full h-48 border-2 border-dashed rounded-lg cursor-pointer transition-colors duration-200 ease-in-out",
-            "border-border bg-muted/30 hover:bg-muted/50", // Default state
-            isDragging && "border-primary bg-primary/10", // Dragging state
-            selectedFile && "border-primary/50 bg-primary/5" // File selected state
-          )}
-          onClick={!selectedFile ? triggerFileInput : undefined} // Trigger input only if no file selected
-          onDragEnter={handleDragEnter}
-          onDragLeave={handleDragLeave}
-          onDragOver={handleDragOver}
-          onDrop={handleDrop}
-          aria-labelledby="file-upload-label"
-        >
-          {selectedFile ? (
-            // Display File Info
-            <div className="flex flex-col items-center text-center p-4 relative w-full">
-               <Button
-                  variant="ghost"
-                  size="icon"
-                  className="absolute top-2 right-2 text-muted-foreground hover:text-destructive h-6 w-6"
-                  onClick={clearFile}
-                  aria-label="Clear selected file"
-                >
-                  <XCircle className="h-5 w-5" />
-               </Button>
-              <FileText className="w-12 h-12 text-primary mb-3" />
-              <p id="file-upload-label" className="font-semibold text-foreground break-all px-4">
-                {selectedFile.name}
-              </p>
-              <p className="text-sm text-muted-foreground mt-1">
-                {formatBytes(selectedFile.size)} - {selectedFile.type}
-              </p>
-               <Button variant="link" size="sm" className="mt-3 text-xs" onClick={triggerFileInput}>
-                 Select a different file
-               </Button>
-            </div>
-          ) : (
-            // Display Upload Prompt
-            <div className="flex flex-col items-center justify-center pt-5 pb-6 text-center">
-              <Upload
-                className={cn(
-                  "w-10 h-10 mb-3 text-muted-foreground transition-colors",
-                  isDragging && "text-primary"
-                )}
-              />
-              <p id="file-upload-label" className="mb-2 text-sm font-semibold text-foreground">
-                <span className="text-primary">Click to upload</span> or drag and drop
-              </p>
-              <p className="text-xs text-muted-foreground">
-                WhatsApp Chat Export (.txt file only)
-              </p>
-            </div>
-          )}
+      <CardContent className="space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor="chat-file">Chat File (.txt)</Label>
+          <div 
+            className="flex items-center justify-center w-full h-32 px-4 border-2 border-dashed rounded-md cursor-pointer hover:border-primary/80 transition-colors duration-200 ease-in-out"
+            onClick={triggerFileInput}
+          >
+            {selectedFile ? (
+              <div className="text-center">
+                <FileText className="mx-auto h-8 w-8 text-primary mb-2" />
+                <p className="font-medium text-sm truncate max-w-xs">
+                  {selectedFile.name}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {formatBytes(selectedFile.size)}
+                </p>
+              </div>
+            ) : (
+              <div className="text-center text-muted-foreground">
+                <Upload className="mx-auto h-8 w-8 mb-2" />
+                <p className="font-medium text-sm">
+                  Click to browse or drag & drop
+                </p>
+                <p className="text-xs">Max file size: 50MB (Recommended)</p>
+              </div>
+            )}
+          </div>
+          <Input 
+            id="chat-file" 
+            type="file" 
+            className="hidden" 
+            onChange={handleFileChange} 
+            accept=".txt"
+            ref={fileInputRef}
+          />
         </div>
+        {selectedFile && (
+           <div className="text-xs text-muted-foreground flex justify-end items-center">
+             <span>Not the right file?</span> 
+             <Button variant="link" size="sm" className="h-auto p-1 ml-1 text-xs" onClick={clearFile}>Clear selection</Button>
+           </div>
+        )}
       </CardContent>
-      <CardFooter className="flex justify-end">
-        <Button
-          onClick={handleAnalyzeClick}
+      <CardFooter>
+        <Button 
+          className="w-full" 
+          onClick={handleAnalyzeClick} 
           disabled={!selectedFile || isLoading}
         >
           {isLoading ? (
-            <span className="animate-spin mr-2 h-4 w-4 border-t-2 border-b-2 border-primary-foreground rounded-full"></span>
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
           ) : (
-            <Upload className="mr-2 h-4 w-4" />
+            <FileText className="mr-2 h-4 w-4" />
           )}
-          {isLoading ? "Processing..." : "Analyze Chat"}
+          Analyze Chat
         </Button>
       </CardFooter>
     </Card>

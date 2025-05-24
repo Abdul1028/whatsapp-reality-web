@@ -20,89 +20,108 @@ import {
 } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
+interface TimelineDataPoint {
+  date: string
+  messages: number
+  words: number
+}
+
 interface TimelineData {
-  monthly: Array<{
-    month: string
-    count: number
-  }>
-  daily: Array<{
-    date: string
-    count: number
-  }>
+  monthly: TimelineDataPoint[]
+  daily: TimelineDataPoint[]
 }
 
 interface ChartAreaInteractiveProps {
   data: TimelineData
 }
 
+// Remove the hardcoded chartData and chartConfig
+// const chartData = [
+//   { month: "January", desktop: 186, mobile: 80 },
+//   { month: "February", desktop: 305, mobile: 200 },
+//   { month: "March", desktop: 237, mobile: 120 },
+//   { month: "April", desktop: 73, mobile: 190 },
+//   { month: "May", desktop: 209, mobile: 130 },
+//   { month: "June", desktop: 214, mobile: 140 },
+// ]
+
+// const chartConfig = {
+//   desktop: {
+//     label: "Desktop",
+//     color: "var(--primary)",
+//   },
+//   mobile: {
+//     label: "Mobile",
+//     color: "var(--primary)",
+//   },
+// } satisfies ChartConfig
+
 export function ChartAreaInteractive({ data }: ChartAreaInteractiveProps) {
+  const [activeTab, setActiveTab] = React.useState("monthly")
+
+  const chartData = activeTab === "monthly" ? data.monthly : data.daily;
+
+  // Define chart config based on timeline data
+  const chartConfig = {
+    messages: {
+      label: "Messages",
+      color: "hsl(var(--primary))", // Using a HSL color variable
+    },
+    words: {
+      label: "Words",
+      color: "hsl(var(--secondary))", // Using another color variable
+    },
+  } as const; // Using 'as const' for ChartConfig type safety
+
   return (
     <Card>
-      <CardHeader>
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 [&>h5]:-****:data-[slot=title]:leading-7">
         <CardTitle>Message Timeline</CardTitle>
-        <CardDescription>
-          Message activity over time
-        </CardDescription>
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <TabsList className="h-7 grid grid-cols-2 px-0 text-xs">
+            <TabsTrigger value="monthly">Monthly</TabsTrigger>
+            <TabsTrigger value="daily">Daily</TabsTrigger>
+          </TabsList>
+        </Tabs>
       </CardHeader>
       <CardContent>
-        <Tabs defaultValue="monthly" className="w-full">
-          <div className="flex justify-center p-1">
-            <TabsList>
-              <TabsTrigger value="monthly">Monthly</TabsTrigger>
-              <TabsTrigger value="daily">Daily</TabsTrigger>
-            </TabsList>
-          </div>
-          <TabsContent value="monthly" className="mt-0">
-            <div className="h-[300px] w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={data.monthly} margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
-                  <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
-                  <XAxis dataKey="month" />
-                  <YAxis />
-                  <Tooltip 
-                    contentStyle={{ 
-                      backgroundColor: 'var(--background)', 
-                      borderColor: 'var(--border)',
-                      borderRadius: '8px',
-                    }} 
-                  />
-                  <Area
-                    type="monotone"
-                    dataKey="count"
-                    stroke="var(--primary)"
-                    fill="var(--primary)"
-                    fillOpacity={0.2}
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
-          </TabsContent>
-          <TabsContent value="daily" className="mt-0">
-            <div className="h-[300px] w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={data.daily} margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
-                  <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
-                  <XAxis dataKey="date" />
-                  <YAxis />
-                  <Tooltip 
-                    contentStyle={{ 
-                      backgroundColor: 'var(--background)', 
-                      borderColor: 'var(--border)',
-                      borderRadius: '8px',
-                    }} 
-                  />
-                  <Area
-                    type="monotone"
-                    dataKey="count"
-                    stroke="var(--primary)"
-                    fill="var(--primary)"
-                    fillOpacity={0.2}
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
-          </TabsContent>
-        </Tabs>
+        <div className="h-[300px]">
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={chartData}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis
+                dataKey="date"
+                tickLine={false}
+                axisLine={false}
+                tickMargin={8}
+                // Format date ticks based on the active tab
+                tickFormatter={(value) => 
+                  activeTab === "monthly" ? value : value.slice(5) // Show MM-DD for daily
+                }
+              />
+              <YAxis />
+              <Tooltip />
+              {/* Display Area for Messages */}
+              <Area
+                dataKey="messages"
+                type="natural"
+                fill="var(--color-messages)"
+                fillOpacity={0.4}
+                stroke="var(--color-messages)"
+                stackId="a"
+              />
+              {/* Display Area for Words */}
+              <Area
+                dataKey="words"
+                type="natural"
+                fill="var(--color-words)"
+                fillOpacity={0.3}
+                stroke="var(--color-words)"
+                stackId="a"
+              />
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
       </CardContent>
     </Card>
   )
