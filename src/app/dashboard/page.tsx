@@ -11,7 +11,18 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { ChevronDown, ChevronRight, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import * as analysisEngine from '@/lib/analysis-engine';
-import type { UserStat, BasicStats as CalculatedBasicStats, TimelineActivityData } from '@/lib/analysis-engine';
+import type { 
+    UserStat, 
+    BasicStats as CalculatedBasicStats, 
+    TimelineActivityData, 
+    WordUsageData as EngineWordUsageData, 
+    EmojiData as EngineEmojiData,
+    TimePatternsData as EngineTimePatternsData,
+    HourlyActivityPoint as EngineHourlyActivityPoint,
+    DailyActivityPoint as EngineDailyActivityPoint,
+    MonthlyActivityPoint as EngineMonthlyActivityPoint,
+    UserReplyTimeStat
+} from '@/lib/analysis-engine';
 import type { DataFrameRow } from '@/components/upload-form';
 
 // Interfaces for the data structures
@@ -47,16 +58,17 @@ interface TimelineData {
   daily: TimelineDataPoint[];
 }
 
-// Word Usage Data (remains as is for now)
-interface WordCount {
+// Word Usage Data (should align with analysisEngine.WordUsageData)
+interface WordCount { // This is identical to analysisEngine.WordCount
   word: string;
   count: number;
 }
-interface WordUsageData {
+interface WordUsageData { // This should now be identical to analysisEngine.WordUsageData
   total_words: number;
   word_diversity: number;
   words_per_message: number;
   word_counts: WordCount[];
+  // stop_words_used?: string[]; // Optional: could add this if we want to use/display it
 }
 
 // Sentiment Data (remains as is for now)
@@ -78,29 +90,13 @@ interface EmojiData {
   emoji_usage: EmojiUsage[];
 }
 
-// Time Patterns Data (remains as is for now)
-interface HourlyActivity {
-  hour: number;
-  message_count: number;
-}
-interface DailyActivity {
-  day_name: string;
-  message_count: number;
-}
-interface MonthlyActivity {
-  month: string;
-  month_num: number;
-  message_count: number;
-}
-type UserHourlyActivity = { hour: number; } & { [user: string]: number; };
-type UserDailyActivity = { day_name: string; } & { [user: string]: number; };
-interface TimePatternsData {
-  hourly_activity: HourlyActivity[];
-  daily_activity: DailyActivity[];
-  monthly_activity: MonthlyActivity[];
-  user_hourly: UserHourlyActivity[];
-  user_daily: UserDailyActivity[];
-}
+// Time Patterns Data - Old definitions will be replaced or aligned with EngineTimePatternsData
+// interface HourlyActivity { ... }
+// interface DailyActivity { ... }
+// interface MonthlyActivity { ... }
+// type UserHourlyActivity = { ... };
+// type UserDailyActivity = { ... };
+// interface TimePatternsData { ... } // This will now come from analysis-engine
 
 // Conversation Flow Data (remains as is for now)
 interface ConversationStat {
@@ -126,14 +122,15 @@ interface ConversationFlowData {
 
 interface AnalysisResults {
   basicStats: BasicStatsData;
-  timeline: TimelineData;
-  timelineActivity?: TimelineActivityData;
+  timeline: TimelineData; // Old timeline, distinct from TimelineActivityData
+  timelineActivity?: TimelineActivityData; // From analysis-engine
   userActivity: StoredUserActivityData;
-  wordUsage: WordUsageData;
-  sentiment: SentimentData;
-  emoji: EmojiData;
-  timePatterns: TimePatternsData;
-  conversationFlow: ConversationFlowData;
+  wordUsage: WordUsageData; // From analysis-engine (via EngineWordUsageData)
+  sentiment: SentimentData; // Legacy
+  emoji: EngineEmojiData; // From analysis-engine (via EngineEmojiData)
+  timePatterns: EngineTimePatternsData; // Now from analysis-engine
+  replyTimeStats?: UserReplyTimeStat[]; // Add new field for reply time stats
+  conversationFlow: ConversationFlowData; // Legacy
   conversationPatterns: any[]; 
   responseTimes: any[]; 
   messageLength: any[]; 
@@ -149,13 +146,29 @@ const initialBasicStats: BasicStatsData = {
   total_links: 0, total_media_omitted: 0,
 };
 const initialUserActivity: StoredUserActivityData = { user_activity: [] };
-const initialTimePatternsData: TimePatternsData = { hourly_activity: [], daily_activity: [], monthly_activity: [], user_hourly: [], user_daily: [] };
+
+// Update initialTimePatternsData to match EngineTimePatternsData structure
+const initialTimePatternsData: EngineTimePatternsData = {
+  hourly_activity: Array(24).fill(null).map((_, i) => ({ hour: i, message_count: 0 })),
+  daily_activity: [
+    { day_name: "Sunday", day_numeric: 0, message_count: 0 },
+    { day_name: "Monday", day_numeric: 1, message_count: 0 },
+    { day_name: "Tuesday", day_numeric: 2, message_count: 0 },
+    { day_name: "Wednesday", day_numeric: 3, message_count: 0 },
+    { day_name: "Thursday", day_numeric: 4, message_count: 0 },
+    { day_name: "Friday", day_numeric: 5, message_count: 0 },
+    { day_name: "Saturday", day_numeric: 6, message_count: 0 },
+  ],
+  monthly_activity: [],
+};
+
 const initialConversationFlowData: ConversationFlowData = { total_conversations: 0, conversation_stats: [], conversation_starters: [], conversation_enders: [] };
 const initialSentimentData: SentimentData = { sentiments: {}, most_positive: "N/A", most_negative: "N/A" };
 const initialWordUsageData: WordUsageData = { total_words: 0, word_diversity: 0, words_per_message: 0, word_counts: [] };
-const initialEmojiData: EmojiData = { emoji_usage: [] };
+const initialEmojiData: EngineEmojiData = { emoji_usage: [] };
 const initialTimelineData: TimelineData = { monthly: [], daily: [] };
 const initialTimelineActivityData: TimelineActivityData = { daily: [], monthly: [], yearly: [] };
+const initialReplyTimeStats: UserReplyTimeStat[] = []; // Initial state for reply time stats
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -166,6 +179,30 @@ export default function DashboardPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isRawDataVisible, setIsRawDataVisible] = useState(false);
+  const [stopWordsList, setStopWordsList] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    // Fetch stop words
+    async function fetchStopWords() {
+      try {
+        const response = await fetch('/stop_words.txt');
+        if (!response.ok) {
+          console.error('Failed to fetch stop_words.txt', response.statusText);
+          // Proceed with an empty list or default if fetching fails
+          // Alternatively, set an error state or use a hardcoded fallback
+          return;
+        }
+        const text = await response.text();
+        const wordsArray = text.split('\n').map(word => word.trim().toLowerCase()).filter(word => word.length > 0);
+        setStopWordsList(new Set(wordsArray));
+        console.log(`[DashboardPage] Loaded ${wordsArray.length} stop words into a Set.`);
+      } catch (e) {
+        console.error("Error fetching or processing stop words:", e);
+        // Proceed with an empty list or default if fetching fails
+      }
+    }
+    fetchStopWords();
+  }, []);
 
   useEffect(() => {
     const dataId = searchParams.get('id');
@@ -175,8 +212,6 @@ export default function DashboardPage() {
     async function fetchDataAndProcess() {
       if (!dataId) {
         toast.error("No Analysis ID", { description: "No analysis ID found in URL. Please upload a chat file again." });
-        // Attempt to load from legacy storage if no dataId, or show error message
-        // This part handles the scenario where user might land here without a dataId from previous navigation
         const legacyStoredResults = localStorage.getItem("whatsappAnalysisResults");
         if (legacyStoredResults) {
             try {
@@ -190,6 +225,7 @@ export default function DashboardPage() {
                     sentiment: parsedLegacy.sentiment || initialSentimentData,
                     emoji: parsedLegacy.emoji || initialEmojiData,
                     timePatterns: parsedLegacy.timePatterns || initialTimePatternsData,
+                    replyTimeStats: parsedLegacy.replyTimeStats || initialReplyTimeStats,
                     conversationFlow: parsedLegacy.conversationFlow || initialConversationFlowData,
                     conversationPatterns: parsedLegacy.conversationPatterns || [],
                     responseTimes: parsedLegacy.responseTimes || [],
@@ -205,6 +241,10 @@ export default function DashboardPage() {
         }
         setIsLoading(false);
         return;
+      }
+
+      if (stopWordsList.size === 0) {
+        console.warn("[DashboardPage] Proceeding with data processing, stop words list might be empty or still loading.");
       }
 
       setIsLoading(true);
@@ -227,10 +267,14 @@ export default function DashboardPage() {
         setRawDataFrame(fetchedData);
         console.log(`[DashboardPage] Fetched ${fetchedData.length} rows for dataId: ${dataId}`);
 
-        // Perform client-side calculations for BasicStats and UserActivity
+        // Perform client-side calculations
         const calculatedBasicStats: CalculatedBasicStats = analysisEngine.calculateBasicStats(fetchedData);
         const userStats: UserStat[] = analysisEngine.calculateUserStats(fetchedData);
         const timelineActivity = analysisEngine.calculateTimelineActivity(fetchedData);
+        const calculatedWordUsage: EngineWordUsageData = analysisEngine.calculateWordUsage(fetchedData, stopWordsList);
+        const calculatedEmojiUsage: EngineEmojiData = analysisEngine.calculateEmojiUsage(fetchedData);
+        const calculatedTimePatterns: EngineTimePatternsData = analysisEngine.calculateTimePatterns(fetchedData);
+        const calculatedReplyTimes: UserReplyTimeStat[] = analysisEngine.calculateReplyTimes(fetchedData); // Calculate reply times
 
         let finalBasicStats: BasicStatsData = {
             total_messages: calculatedBasicStats.total_messages,
@@ -246,15 +290,15 @@ export default function DashboardPage() {
             total_media_omitted: calculatedBasicStats.total_media_omitted,
         };
         let finalUserActivity: StoredUserActivityData = { user_activity: userStats };
+        let finalWordUsage: WordUsageData = calculatedWordUsage; // WordUsageData is compatible with EngineWordUsageData
+        let finalEmoji: EngineEmojiData = calculatedEmojiUsage;
+        let finalTimePatterns: EngineTimePatternsData = calculatedTimePatterns; // Use newly calculated time patterns
+        let finalReplyTimeStats: UserReplyTimeStat[] = calculatedReplyTimes; // Store calculated reply times
 
-        // Load other analysis parts from localStorage (transitional)
-        // These would ideally also come from server or be calculated from fetchedData if needed
+        // Load OTHER analysis parts from localStorage (transitional)
         const legacyStoredResults = localStorage.getItem("whatsappAnalysisResults");
-        let finalWordUsage = initialWordUsageData;
-        let finalTimeline = initialTimelineData;
+        let finalTimeline = initialTimelineData; // Old timeline data
         let finalSentiment = initialSentimentData;
-        let finalEmoji = initialEmojiData;
-        let finalTimePatterns = initialTimePatternsData;
         let finalConversationFlow = initialConversationFlowData;
         let finalConvPatterns: any[] = [];
         let finalResponseTimes: any[] = [];
@@ -264,32 +308,41 @@ export default function DashboardPage() {
         if (legacyStoredResults) {
             try {
                 const parsedLegacy = JSON.parse(legacyStoredResults) as Partial<AnalysisResults>;
-                // basicStats and userActivity are now from fetched data, don't overwrite from legacy if fetch was successful
-                finalWordUsage = parsedLegacy.wordUsage || initialWordUsageData;
+                // finalWordUsage, finalEmoji are already set
+                // Logic for merging/prioritizing with legacy if needed for these two
+                if ((!finalWordUsage.word_counts || finalWordUsage.word_counts.length === 0) && parsedLegacy.wordUsage) {
+                  finalWordUsage = parsedLegacy.wordUsage;
+                }
+                if ((!finalEmoji.emoji_usage || finalEmoji.emoji_usage.length === 0) && parsedLegacy.emoji) {
+                  finalEmoji = parsedLegacy.emoji;
+                }
+
                 finalTimeline = parsedLegacy.timeline || initialTimelineData;
                 finalSentiment = parsedLegacy.sentiment || initialSentimentData;
-                finalEmoji = parsedLegacy.emoji || initialEmojiData;
-                finalTimePatterns = parsedLegacy.timePatterns || initialTimePatternsData;
                 finalConversationFlow = parsedLegacy.conversationFlow || initialConversationFlowData;
                 finalConvPatterns = parsedLegacy.conversationPatterns || [];
                 finalResponseTimes = parsedLegacy.responseTimes || [];
                 finalMsgLength = parsedLegacy.messageLength || [];
                 finalMoodShifts = parsedLegacy.moodShifts || [];
+                // Prioritize fresh calculations for replyTimeStats
+                if (!finalReplyTimeStats || finalReplyTimeStats.length === 0) {
+                  finalReplyTimeStats = parsedLegacy.replyTimeStats || initialReplyTimeStats;
+                }
             } catch (e) {
                  console.warn("[DashboardPage] Could not parse legacy whatsappAnalysisResults from localStorage:", e);
-                 // Keep initial values for these if parsing legacy fails
             }
         }
         
         setAnalysisResults({
             basicStats: finalBasicStats,
             userActivity: finalUserActivity,
-            timelineActivity: timelineActivity,
+            timelineActivity: timelineActivity, // New timeline activity from engine
             wordUsage: finalWordUsage,
-            timeline: finalTimeline,
+            timeline: finalTimeline, // Legacy timeline data
             sentiment: finalSentiment,
             emoji: finalEmoji,
-            timePatterns: finalTimePatterns,
+            timePatterns: finalTimePatterns, // Newly calculated time patterns
+            replyTimeStats: finalReplyTimeStats, // Pass replyTimeStats to results
             conversationFlow: finalConversationFlow,
             conversationPatterns: finalConvPatterns,
             responseTimes: finalResponseTimes,
@@ -317,6 +370,7 @@ export default function DashboardPage() {
                     sentiment: parsedLegacy.sentiment || initialSentimentData,
                     emoji: parsedLegacy.emoji || initialEmojiData,
                     timePatterns: parsedLegacy.timePatterns || initialTimePatternsData,
+                    replyTimeStats: parsedLegacy.replyTimeStats || initialReplyTimeStats,
                     conversationFlow: parsedLegacy.conversationFlow || initialConversationFlowData,
                     conversationPatterns: parsedLegacy.conversationPatterns || [],
                     responseTimes: parsedLegacy.responseTimes || [],
@@ -331,7 +385,8 @@ export default function DashboardPage() {
     }
 
     fetchDataAndProcess();
-  }, [searchParams, router]);
+
+  }, [searchParams, stopWordsList, router]);
 
   if (isLoading) {
     return (
@@ -403,6 +458,7 @@ export default function DashboardPage() {
           moodShifts={analysisResults.moodShifts}
           conversationPatterns={analysisResults.conversationPatterns}
           responseTimes={analysisResults.responseTimes}
+          replyTimeStats={analysisResults.replyTimeStats}
         />
       </Suspense>
 

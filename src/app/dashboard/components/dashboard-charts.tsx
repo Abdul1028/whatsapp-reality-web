@@ -22,6 +22,7 @@ import {
   Tooltip,
   XAxis,
   YAxis,
+  LabelList,
 } from "recharts"
 
 import {
@@ -34,12 +35,39 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button"
 import { Download, RefreshCw, ExternalLink, ImageOff, MessageSquareText, Users, CalendarDays, TextSelect, ChevronDown, ChevronRight } from "lucide-react"
-import { UserStat, TimelineActivityData, ActivityPoint } from "@/lib/analysis-engine"
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible"
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import type { 
+    UserStat, 
+    BasicStats, 
+    TimelineActivityData, 
+    WordUsageData, 
+    EmojiData as EngineEmojiData, 
+    ActivityPoint,
+    TimePatternsData as EngineTimePatternsData,
+    UserReplyTimeStat
+} from '@/lib/analysis-engine';
+import { cn } from '@/lib/utils';
+import { PieChart as RechartsPieChart, Sector } from 'recharts';
+import { type ChartConfig } from "@/components/ui/chart";
 
 // Color array for charts
 const COLORS = [
@@ -70,41 +98,17 @@ interface EmojiUsage {
   emoji: string;
   count: number;
 }
-interface EmojiData {
+interface LocalEmojiData {
   emoji_usage: EmojiUsage[];
 }
 
-// Copied from page.tsx for consistency
-interface HourlyActivity {
-  hour: number;
-  message_count: number;
-}
-interface DailyActivity {
-  day_name: string;
-  message_count: number;
-}
-interface MonthlyActivity {
-  month: string;
-  month_num: number;
-  message_count: number;
-}
-type UserHourlyActivity = {
-  hour: number;
-} & {
-  [user: string]: number;
-};
-type UserDailyActivity = {
-  day_name: string;
-} & {
-  [user: string]: number;
-};
-interface TimePatternsData {
-  hourly_activity: HourlyActivity[];
-  daily_activity: DailyActivity[];
-  monthly_activity: MonthlyActivity[];
-  user_hourly: UserHourlyActivity[];
-  user_daily: UserDailyActivity[];
-}
+// Remove or comment out old local TimePatternsData related interfaces
+// interface HourlyActivity { ... }
+// interface DailyActivity { ... }
+// interface MonthlyActivity { ... }
+// type UserHourlyActivity = { ... };
+// type UserDailyActivity = { ... };
+// interface TimePatternsData { ... } // This is now coming from the engine via props
 
 interface ConversationStat {
   conversation_id: number;
@@ -126,33 +130,41 @@ interface ConversationFlowData {
   conversation_enders: UserCount[];
 }
 
-export interface BasicStatsData {
-  total_messages: number;
-  total_words: number;
-  total_users: number;
-  first_message_date: string | null;
-  last_message_date: string | null;
-  first_message_text: string | null;
-  last_message_text: string | null;
-  first_message_sender: string | null;
-  last_message_sender: string | null;
-  total_links: number;
-  total_media_omitted: number;
+interface DashboardChartsProps {
+  basicStats: BasicStats;
+  userActivity: UserStat[] | undefined;
+  sentimentData: SentimentData;
+  emojiData: EngineEmojiData | undefined;
+  conversationPatterns: any[];
+  responseTimes: any[];
+  wordUsage: WordCount[] | undefined;
+  messageLength: any[];
+  moodShifts: any[];
+  timePatternsData: EngineTimePatternsData;
+  replyTimeStats?: UserReplyTimeStat[];
+  conversationFlowData: ConversationFlowData;
+  timelineActivityData?: TimelineActivityData;
 }
 
-interface DashboardChartsProps {
-  basicStats: BasicStatsData;
-  userActivity?: UserStat[];
-  sentimentData: SentimentData;
-  emojiData: EmojiData;
-  conversationPatterns?: any; // Made optional
-  responseTimes?: any;        // Made optional
-  wordUsage: WordCount[];
-  messageLength: any;
-  moodShifts: any;
-  timePatternsData?: TimePatternsData;
-  conversationFlowData?: ConversationFlowData;
-  timelineActivityData?: TimelineActivityData; // Added prop
+const INITIAL_VISIBLE_USERS = 10;
+const USERS_TO_LOAD_MORE = 10;
+const INITIAL_VISIBLE_REPLY_USERS = 10;
+
+// Helper function to format seconds into a readable time string
+function formatSecondsToTime(totalSeconds: number | null | undefined): string {
+  if (totalSeconds == null || totalSeconds < 0) return "N/A";
+  if (totalSeconds === 0) return "< 1 sec";
+
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = Math.floor(totalSeconds % 60);
+
+  let timeString = "";
+  if (hours > 0) timeString += `${hours}h `;
+  if (minutes > 0) timeString += `${minutes}m `;
+  if (seconds > 0 || (hours === 0 && minutes === 0)) timeString += `${seconds}s`;
+  
+  return timeString.trim() || "0s"; // Fallback for very small fractions resulting in empty string
 }
 
 export function DashboardCharts({
@@ -160,21 +172,29 @@ export function DashboardCharts({
   userActivity,
   sentimentData,
   emojiData,
-  conversationPatterns, // Still here, but usage is unclear
+  conversationPatterns,
   responseTimes,
   wordUsage,
   messageLength,
   moodShifts,
   timePatternsData,
+  replyTimeStats,
   conversationFlowData,
-  timelineActivityData, // Added prop
+  timelineActivityData,
 }: DashboardChartsProps) {
   const [refreshKey, setRefreshKey] = React.useState(0)
   const [isFirstMsgOpen, setIsFirstMsgOpen] = React.useState(false);
   const [isLastMsgOpen, setIsLastMsgOpen] = React.useState(false);
   const [timelineGranularity, setTimelineGranularity] = React.useState<"daily" | "monthly" | "yearly">("monthly");
+  const chartContainerRef = React.useRef<HTMLDivElement>(null);
+  const [timeframe, setTimeframe] = React.useState<keyof TimelineActivityData>('daily');
+  const [activeEmojiIndex, setActiveEmojiIndex] = React.useState<number | null>(null);
+  const [visibleUserCount, setVisibleUserCount] = React.useState(INITIAL_VISIBLE_USERS);
+  const [visibleReplyUsersCount, setVisibleReplyUsersCount] = React.useState(INITIAL_VISIBLE_REPLY_USERS);
 
   console.log("DashboardCharts: received timelineActivityData:", timelineActivityData);
+  console.log("DashboardCharts: received timePatternsData:", timePatternsData);
+  console.log("DashboardCharts: received replyTimeStats:", replyTimeStats);
 
   // Function to handle data download
   const handleDownload = (chartName: string, data: any) => {
@@ -220,10 +240,10 @@ export function DashboardCharts({
   // Prepare data for User Sentiment Bar Chart
   const userSentimentChartData = React.useMemo(() => {
     if (!sentimentData || !sentimentData.sentiments) return [];
-    return Object.entries(sentimentData.sentiments).map(([user, values]) => ({
-      user: user.trim(), // Remove leading space if any
-      positive: parseFloat(values[0]), // Convert percentage string to number
-      negative: parseFloat(values[1]), // Convert percentage string to number
+    return Object.entries(sentimentData.sentiments).map(([user, values]: [string, [string, string]]) => ({
+      user,
+      positive: parseFloat(values[0]),
+      negative: parseFloat(values[1]),
     }));
   }, [sentimentData]);
 
@@ -236,6 +256,66 @@ export function DashboardCharts({
       return dateString; // fallback to original string if parsing fails
     }
   };
+
+  const sortedUserActivity = React.useMemo(() => {
+    if (!userActivity) return [];
+    return [...userActivity].sort((a, b) => b.message_count - a.message_count);
+  }, [userActivity]);
+
+  const visibleUserActivity = React.useMemo(() => {
+    return sortedUserActivity.slice(0, visibleUserCount);
+  }, [sortedUserActivity, visibleUserCount]);
+
+  const handleShowMoreUsers = () => {
+    setVisibleUserCount(prevCount => Math.min(prevCount + USERS_TO_LOAD_MORE, sortedUserActivity.length));
+  };
+
+  // Messages per User Chart
+  const userChartConfig = {
+    messages: { label: "Messages", color: "hsl(var(--chart-1))" },
+  } satisfies ChartConfig;
+
+  const topEmojis = React.useMemo(() => {
+    if (!emojiData || !emojiData.emoji_usage) return [];
+    return emojiData.emoji_usage.slice(0, 8);
+  }, [emojiData]);
+
+  // Word Usage Chart Config & Data
+  const wordUsageChartConfig = {
+    count: { label: "Frequency", color: "hsl(var(--chart-1))" },
+  } satisfies ChartConfig;
+
+  const wordUsageChartData = React.useMemo(() => {
+    if (!wordUsage || wordUsage.length === 0) return []; // Added check for undefined or empty wordUsage
+    return wordUsage.slice(0, 20); // Top 20 words
+  }, [wordUsage]);
+
+  const visibleReplyTimeStats = React.useMemo(() => {
+    if (!replyTimeStats) return [];
+    // Already sorted by engine: fastest first
+    return replyTimeStats.slice(0, visibleReplyUsersCount);
+  }, [replyTimeStats, visibleReplyUsersCount]);
+
+  const handleShowMoreReplyUsers = () => {
+    if (!replyTimeStats) return;
+    setVisibleReplyUsersCount(prevCount => Math.min(prevCount + USERS_TO_LOAD_MORE, replyTimeStats.length));
+  };
+
+  const fastestReplier = React.useMemo(() => {
+    if (!replyTimeStats || replyTimeStats.length === 0) return null;
+    return replyTimeStats[0]; // Already sorted fastest first
+  }, [replyTimeStats]);
+
+  const slowestReplier = React.useMemo(() => {
+    if (!replyTimeStats || replyTimeStats.length === 0) return null;
+    // Create a new array sorted by slowest first
+    const sortedSlowest = [...replyTimeStats].sort((a, b) => (b.average_reply_time_seconds ?? -Infinity) - (a.average_reply_time_seconds ?? -Infinity));
+    return sortedSlowest[0];
+  }, [replyTimeStats]);
+
+  const replyTimeChartConfig = {
+    time: { label: "Avg. Reply Time (sec)", color: "hsl(var(--chart-3))" },
+  } satisfies ChartConfig;
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-1">
@@ -358,22 +438,35 @@ export function DashboardCharts({
       {/* Emoji Usage Chart */}
       <Card className="col-span-1">
         <CardHeader className="pb-0">
-          <ChartToolbar title="Emoji Usage" data={emojiData.emoji_usage} />
+          <ChartToolbar title="Top 8 Emoji Usage" data={topEmojis} />
         </CardHeader>
-        <CardContent className="p-0 sm:p-6">
-          <div className="h-[300px] w-full">
+        <CardContent className="p-0 sm:p-6 flex items-center justify-center">
+          <div className="h-[300px] w-[300px]"> {/* Fixed size container for the PieChart anas it can sometimes over-expand */}
             {emojiData && emojiData.emoji_usage && emojiData.emoji_usage.length > 0 ? (
-                <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={emojiData.emoji_usage.slice(0,10)} layout="vertical">
-                        <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
-                        <XAxis type="number" />
-                        <YAxis dataKey="emoji" type="category" width={40}/>
-                        <Tooltip formatter={(value: number, name: string) => [value, name]} />
-                        <Bar dataKey="count" name="Count" fill="var(--primary)" radius={[0, 4, 4, 0]} />
-                    </BarChart>
-                </ResponsiveContainer>
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={topEmojis}
+                    cx="50%"
+                    cy="50%"
+                    labelLine={false}
+                    // label={({ emoji, percent }) => `${emoji} ${(percent * 100).toFixed(0)}%`}
+                    outerRadius={100}
+                    innerRadius={60} // For Donut chart
+                    dataKey="count"
+                    nameKey="emoji" // Associates the emoji character with the slice name
+                    paddingAngle={2}
+                  >
+                    {topEmojis.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip formatter={(value: number, name: string) => [value.toLocaleString(), name]} />
+                  <Legend iconSize={10} formatter={(value, entry) => <span style={{ color: entry.color }}>{value}</span>} />
+                </PieChart>
+              </ResponsiveContainer>
             ) : (
-                <p className="text-center text-muted-foreground flex items-center justify-center h-full">No emoji data to display.</p>
+              <p className="text-center text-muted-foreground flex items-center justify-center h-full">No emoji data to display.</p>
             )}
           </div>
         </CardContent>
@@ -402,12 +495,12 @@ export function DashboardCharts({
       {/* Word Usage Chart */}
       <Card className="col-span-1 md:col-span-2 lg:col-span-3">
         <CardHeader className="pb-0">
-          <ChartToolbar title="Word Usage" data={wordUsage} />
+          <ChartToolbar title="Word Usage" data={wordUsageChartData} />
         </CardHeader>
         <CardContent className="p-0 sm:p-6">
           <div className="h-[300px] w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={wordUsage.slice(0, 20)} margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
+              <BarChart data={wordUsageChartData} margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
                 <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
                 <XAxis dataKey="word" />
                 <YAxis />
@@ -596,6 +689,96 @@ export function DashboardCharts({
         </Card>
       )}
 
+      {/* User Message Count Bar Chart - NEW */}
+      {userActivity && userActivity.length > 0 && (
+        <Card className="col-span-1 md:col-span-3">
+          <CardHeader>
+            <ChartToolbar title="Messages per User" data={visibleUserActivity} />
+          </CardHeader>
+          <CardContent className="p-0 sm:p-6">
+            <div className="h-[350px] w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart 
+                  data={visibleUserActivity}
+                  margin={{ top: 5, right: 20, bottom: 70, left: 5 }} // Increased bottom margin for angled labels
+                >
+                  <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
+                  <XAxis 
+                    dataKey="user" 
+                    angle={-45} 
+                    textAnchor="end" 
+                    interval={0} // Show all user labels
+                    height={80} // Adjust height for angled labels
+                  />
+                  <YAxis allowDecimals={false} />
+                  <Tooltip formatter={(value: number) => [value.toLocaleString(), "Messages"]} />
+                  <Bar dataKey="message_count" name="Messages" fill="var(--primary)" radius={[4, 4, 0, 0]}>
+                    <LabelList dataKey="message_count" position="top" formatter={(value: number) => value.toLocaleString()} />
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+            {sortedUserActivity.length > visibleUserCount && (
+              <div className="mt-4 text-center">
+                <Button onClick={handleShowMoreUsers} variant="outline">
+                  Show More Users ({sortedUserActivity.length - visibleUserCount} remaining)
+                </Button>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Hourly Message Activity Line Chart - NEW */}
+      {timePatternsData && timePatternsData.hourly_activity && timePatternsData.hourly_activity.length > 0 && (
+        <Card className="col-span-1 md:col-span-3">
+          <CardHeader>
+            <ChartToolbar title="Hourly Message Activity" data={timePatternsData.hourly_activity} />
+          </CardHeader>
+          <CardContent className="p-0 sm:p-6">
+            <div className="h-[300px] w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart
+                  data={timePatternsData.hourly_activity.sort((a, b) => a.hour - b.hour)}
+                  margin={{
+                    top: 5,
+                    right: 20,
+                    left: 0,
+                    bottom: 5,
+                  }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
+                  <XAxis 
+                    dataKey="hour" 
+                    tickFormatter={(hour) => {
+                      const h = parseInt(hour, 10);
+                      if (h === 0) return "12 AM";
+                      if (h === 12) return "12 PM";
+                      if (h < 12) return `${h} AM`;
+                      return `${h - 12} PM`;
+                    }}
+                    interval={typeof window !== 'undefined' && window.innerWidth < 768 ? 2 : 1} // Show fewer ticks on small screens
+                  />
+                  <YAxis allowDecimals={false} />
+                  <Tooltip
+                    labelFormatter={(label) => {
+                      const h = parseInt(label, 10);
+                      if (h === 0) return "12 AM";
+                      if (h === 12) return "12 PM";
+                      if (h < 12) return `${h} AM`;
+                      return `${h - 12} PM`;
+                    }}
+                    formatter={(value: number) => [value.toLocaleString(), "Messages"]}
+                  />
+                  <Legend />
+                  <Line type="monotone" dataKey="message_count" name="Messages" stroke="var(--primary)" strokeWidth={2} dot={{ r: 3 }} activeDot={{ r: 6 }} />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Per-User Statistics Section */}
       {userActivity && userActivity.length > 0 && (
         <Card className="col-span-1 md:col-span-3">
@@ -639,6 +822,70 @@ export function DashboardCharts({
                 </CardContent>
               </Card>
             ))}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Average Reply Time Chart - NEW */}
+      {replyTimeStats && replyTimeStats.length > 0 && (
+        <Card className="col-span-1 md:col-span-3">
+          <CardHeader>
+            <ChartToolbar title="Average User Reply Times" data={replyTimeStats} />
+            <div className="text-sm text-muted-foreground pt-2 space-y-1">
+              {fastestReplier && (
+                <p>Fastest Average: <span className="font-semibold text-primary">{fastestReplier.user}</span> ({formatSecondsToTime(fastestReplier.average_reply_time_seconds)})</p>
+              )}
+              {slowestReplier && (
+                <p>Slowest Average: <span className="font-semibold text-destructive">{slowestReplier.user}</span> ({formatSecondsToTime(slowestReplier.average_reply_time_seconds)})</p>
+              )}
+            </div>
+          </CardHeader>
+          <CardContent className="p-0 sm:p-6">
+            <div className="h-[350px] w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart 
+                  data={visibleReplyTimeStats}
+                  margin={{ top: 5, right: 20, bottom: 70, left: 20 }} // Adjusted left margin for Y-axis labels
+                >
+                  <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
+                  <XAxis 
+                    dataKey="user" 
+                    angle={-45} 
+                    textAnchor="end" 
+                    interval={0} 
+                    height={80}
+                    tickFormatter={(value) => value.slice(0, 15) + (value.length > 15 ? '...' : '')} // Truncate long names
+                  />
+                  <YAxis 
+                    dataKey="average_reply_time_seconds"
+                    allowDecimals={false} 
+                    label={{ value: "Avg. Reply Time", angle: -90, position: 'insideLeft', offset: -5, style: {fontSize: '0.8rem', fill: 'hsl(var(--muted-foreground))'} }}
+                    tickFormatter={(value) => formatSecondsToTime(value)} // Format Y-axis ticks
+                  />
+                  <Tooltip 
+                    formatter={(value: number, name: string, props: any) => {
+                        return [formatSecondsToTime(value), `Avg. Reply Time (${props.payload.user})`];
+                    }}
+                    labelFormatter={(label) => ``} // User is in the formatted value now
+                  />
+                  <Bar dataKey="average_reply_time_seconds" name="Average Reply Time" fill="var(--chart-3)" radius={[4, 4, 0, 0]}>
+                    <LabelList 
+                        dataKey="average_reply_time_seconds" 
+                        position="top" 
+                        formatter={(value: number) => formatSecondsToTime(value)} 
+                        fontSize={10}
+                    />
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+            {replyTimeStats.length > visibleReplyUsersCount && (
+              <div className="mt-4 text-center">
+                <Button onClick={handleShowMoreReplyUsers} variant="outline">
+                  Show More Users ({replyTimeStats.length - visibleReplyUsersCount} remaining)
+                </Button>
+              </div>
+            )}
           </CardContent>
         </Card>
       )}
