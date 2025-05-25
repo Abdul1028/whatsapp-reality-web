@@ -31,6 +31,7 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
+  CardFooter
 } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button"
@@ -67,6 +68,8 @@ import type {
 import { cn } from '@/lib/utils';
 import { type ChartConfig } from "@/components/ui/chart";
 import useMediaQuery from "@/hooks/useMediaQuery";
+import { hasViewportRelativeCoordinates } from "@dnd-kit/utilities"
+import { createServerParamsForServerSegment } from "next/dist/server/app-render/entry-base"
 
 // Color array for charts
 const COLORS = [
@@ -788,6 +791,43 @@ export function DashboardCharts({
       console.log("timelineChartDisplayData for Message Timeline:", timelineChartDisplayData);
       {/* ^^^^^^ ADD THESE LOGS HERE ^^^^^^ */}
 
+  const overallLongestStreak = React.useMemo(() => {
+    if (!userActivity || userActivity.length === 0) {
+      return null;
+    }
+    let longestStreakHolder: UserStat | null = null;
+    for (const stat of userActivity) {
+      if (stat.longest_daily_streak && stat.longest_daily_streak.length_days > 0) {
+        if (!longestStreakHolder || 
+            (longestStreakHolder.longest_daily_streak && stat.longest_daily_streak.length_days > longestStreakHolder.longest_daily_streak.length_days)) {
+          longestStreakHolder = stat;
+        }
+      }
+    }
+    return longestStreakHolder;
+  }, [userActivity]);
+
+
+  //TODO: get this fixed
+  const averageConversationStats = React.useMemo(() => {
+    if (!conversationFlowData || !conversationFlowData.conversation_stats || conversationFlowData.conversation_stats.length === 0) {
+      return null;
+    }
+    const totalConversations = conversationFlowData.conversation_stats.length;
+    const totalDurationMinutes = conversationFlowData.conversation_stats.reduce((sum, stat) => sum + stat.duration, 0);
+    const totalMessages = conversationFlowData.conversation_stats.reduce((sum, stat) => sum + stat.message_count, 0);
+
+    return {
+      avgDurationMinutes: totalDurationMinutes / totalConversations,
+      avgMessages: totalMessages / totalConversations,
+      totalConversations: totalConversations
+    };
+  }, [conversationFlowData]);
+
+  {
+    console.log("averageConversationStats", averageConversationStats)
+  }
+
   // JSX rendering starts here
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-1">
@@ -818,8 +858,39 @@ export function DashboardCharts({
               <CollapsibleContent className="w-full pt-1 text-xs text-muted-foreground mt-1 overflow-hidden"><p className="break-words whitespace-pre-wrap">{basicStats.last_message_text || 'N/A'}</p></CollapsibleContent>
             </Collapsible>
           </CardContent>
+          {overallLongestStreak && overallLongestStreak.longest_daily_streak && overallLongestStreak.longest_daily_streak.length_days > 0 && (
+            <CardFooter className="pt-4 pb-3 text-sm text-center flex-col items-center border-t mt-2">
+              <p className="leading-tight">
+                Leading the charge, <span className="font-semibold text-primary">{overallLongestStreak.user}</span> kept the conversation alive with an impressive
+                <span className="font-semibold text-primary"> {overallLongestStreak.longest_daily_streak.length_days} day{overallLongestStreak.longest_daily_streak.length_days === 1 ? '' : 's'}</span> messaging streak!
+              </p>
+              {overallLongestStreak.longest_daily_streak.length_days > 1 && overallLongestStreak.longest_daily_streak.start_date && overallLongestStreak.longest_daily_streak.end_date && (
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  (From {formatDate(overallLongestStreak.longest_daily_streak.start_date)} to {formatDate(overallLongestStreak.longest_daily_streak.end_date)})
+                </p>
+
+              )}
+            </CardFooter>
+          )}
         </Card>
       )}
+
+    
+
+
+       {/* Render Average Conversation Stats Below Basic Statistics */}
+    {averageConversationStats && (
+      <CardFooter className="pt-4 pb-3 text-sm border-t mt-2">
+        <div className="flex flex-col space-y-1">
+          <p>Total Conversations: <span className="font-semibold">{averageConversationStats.totalConversations.toLocaleString()}</span></p>
+          <p>Average Duration: <span className="font-semibold">{averageConversationStats.avgDurationMinutes.toFixed(1)} minutes</span></p>
+          <p>Average Messages per Conversation: <span className="font-semibold">{averageConversationStats.avgMessages.toFixed(1)}</span></p>
+        </div>
+      </CardFooter>
+    )}
+
+
+
 
       {/* User Activity Section with Tabs */}
       {userActivity && userActivity.length > 0 && sortedUserActivity.length > 0 && (
@@ -1166,6 +1237,15 @@ export function DashboardCharts({
                   <p>Avg. Msg Length: <span className="font-semibold">{stat.avg_message_length.toFixed(1)} words</span></p>
                   <p>Links Shared: <span className="font-semibold">{stat.links_shared_count.toLocaleString()}</span></p>
                   <p>Media Shared: <span className="font-semibold">{stat.media_shared_count.toLocaleString()}</span></p>
+                  <p>Voice Notes: <span className="font-semibold">{stat.voice_notes_sent?.toLocaleString() || '0'}</span></p>
+                  {stat.longest_daily_streak && (
+                    <p>Longest Daily Streak: 
+                      <span className="font-semibold">
+                        {stat.longest_daily_streak.length_days > 0 ? `${stat.longest_daily_streak.length_days} day${stat.longest_daily_streak.length_days === 1 ? '' : 's'}` : 'N/A'}
+                      </span>
+
+                    </p>
+                  )}
                   {stat.most_used_emojis && stat.most_used_emojis.length > 0 && (
                     <div className="pt-1"><p className="text-xs font-medium">Top Emojis:</p><div className="flex flex-wrap gap-1 text-lg pt-0.5">{stat.most_used_emojis.map(emojiStat => (<span key={emojiStat.emoji} title={`${emojiStat.count} times`}>{emojiStat.emoji}</span>))}</div></div>)}
                   {stat.biggest_message && stat.biggest_message.text && stat.biggest_message.text.length > 0 && (
@@ -1233,6 +1313,15 @@ export function DashboardCharts({
               </table>
             </div>
           </CardContent>
+          {averageConversationStats && (
+            <CardFooter className="pt-4 pb-3 text-sm border-t mt-2">
+              <div className="flex flex-col space-y-1">
+                <p>Total Conversations: <span className="font-semibold">{averageConversationStats.totalConversations.toLocaleString()}</span></p>
+                <p>Average Duration: <span className="font-semibold">{averageConversationStats.avgDurationMinutes.toFixed(1)} minutes</span></p>
+                <p>Average Messages per Conversation: <span className="font-semibold">{averageConversationStats.avgMessages.toFixed(1)}</span></p>
+              </div>
+            </CardFooter>
+          )}
         </Card>)}
     </div>
   );

@@ -22,15 +22,22 @@ export interface UserStat {
   avg_message_length: number;
   links_shared_count: number;
   media_shared_count: number;
+  voice_notes_sent: number; // Added for voice notes
   biggest_message?: { text: string; length: number };
   most_used_emojis: { emoji: string; count: number }[]; // Added for top emojis per user
+  longest_daily_streak: { // Added for daily streak
+    start_date: string | null;
+    end_date: string | null;
+    length_days: number;
+  };
 }
 
 const MEDIA_OMITTED_KEYWORDS = [
   '<Media omitted>', 'image omitted', 'video omitted', 
   'GIF omitted', 'sticker omitted', 'audio omitted', 'document omitted'
 ];
-const LINK_REGEX = /(?:https?:\/\/|www\.)[^\s/$.?#].[^\s]*/gi;
+const SPECIFIC_AUDIO_OMITTED_KEYWORD = "audio omitted"; // More specific for voice notes if possible
+const LINK_REGEX = /(?:https?:\/\/|www\.)[^\s\/$.?#].[^\s]*/gi;
 const EMOJI_REGEX = /\p{Emoji_Presentation}|\p{Extended_Pictographic}/gu;
 
 export function calculateBasicStats(data: DataFrameRow[]): BasicStats {
@@ -92,9 +99,11 @@ export function calculateUserStats(data: DataFrameRow[]): UserStat[] {
   if (!data || data.length === 0) return [];
 
   const userStatsMap = new Map<string, UserStat>();
+  // First, populate the map with initial UserStat objects and collect all message dates per user
+  const userMessageDates = new Map<string, string[]>();
 
   data.forEach(row => {
-    if (row.user === 'group_notification') return; // Skip group notifications for user stats
+    if (row.user === 'group_notification') return; 
 
     let userStat = userStatsMap.get(row.user);
     if (!userStat) {
@@ -105,28 +114,40 @@ export function calculateUserStats(data: DataFrameRow[]): UserStat[] {
         avg_message_length: 0,
         links_shared_count: 0,
         media_shared_count: 0,
+        voice_notes_sent: 0, 
         biggest_message: { text: 'N/A', length: 0 },
         most_used_emojis: [],
+        longest_daily_streak: { start_date: null, end_date: null, length_days: 0 }, // Initialize
       };
-      // Temporary map for emoji counts for this user, not stored directly in UserStat yet
+      userStatsMap.set(row.user, userStat);
+      userMessageDates.set(row.user, []);
       (userStat as any)._emojiCounts = new Map<string, number>(); 
     }
 
+    // Collect date for streak calculation (YYYY-MM-DD format)
+    try {
+      const d = new Date(row.date);
+      if (!isNaN(d.getTime())) {
+        const dateString = new Date(d.getFullYear(), d.getMonth(), d.getDate()).toISOString().split('T')[0];
+        userMessageDates.get(row.user)?.push(dateString);
+      }
+    } catch (e) {
+      console.warn(`Error parsing date for streak calculation: ${row.date}`, e);
+    }
+    
     userStat.message_count++;
     userStat.word_count += row['Message Length'];
 
-    // Count links for this message
     const linksInMessage = row.message.match(LINK_REGEX);
     if (linksInMessage) {
       userStat.links_shared_count += linksInMessage.length;
     }
-
-    // Count media shared for this message
     if (MEDIA_OMITTED_KEYWORDS.some(keyword => row.message.includes(keyword))) {
       userStat.media_shared_count++;
     }
-
-    // Extract and count emojis for this message
+    if (row.message.includes(SPECIFIC_AUDIO_OMITTED_KEYWORD)) {
+      userStat.voice_notes_sent++;
+    }
     const emojisInMessage = row.message.match(EMOJI_REGEX);
     if (emojisInMessage) {
       const emojiCounts = (userStat as any)._emojiCounts as Map<string, number>; 
@@ -134,35 +155,81 @@ export function calculateUserStats(data: DataFrameRow[]): UserStat[] {
         emojiCounts.set(emoji, (emojiCounts.get(emoji) || 0) + 1);
       });
     }
-
     if (row['Message Length'] > (userStat.biggest_message?.length || 0)) {
       userStat.biggest_message = {
         text: row.message,
         length: row['Message Length'],
       };
     }
-
-    userStatsMap.set(row.user, userStat);
   });
 
-  // Final pass to calculate averages and process emojis
-  const finalStats = Array.from(userStatsMap.values()).map(stat => {
+  // Second pass: calculate averages, top emojis, and longest streaks
+  const finalStats: UserStat[] = [];
+  for (const [userName, stat] of userStatsMap.entries()) {
+    // Calculate Longest Daily Streak
+    const dates = userMessageDates.get(userName);
+    if (dates && dates.length > 0) {
+      const uniqueSortedDates = Array.from(new Set(dates)).sort();
+      
+      if (uniqueSortedDates.length > 0) {
+        let maxStreak = { start: uniqueSortedDates[0], end: uniqueSortedDates[0], length: 1 };
+        let currentStreak = { start: uniqueSortedDates[0], length: 1 };
+
+        for (let i = 1; i < uniqueSortedDates.length; i++) {
+            const currentDateObj = new Date(uniqueSortedDates[i]);
+            const previousDateObj = new Date(uniqueSortedDates[i-1]);
+            
+            const diffTime = currentDateObj.getTime() - previousDateObj.getTime();
+            const diffDays = Math.round(diffTime / (1000 * 3600 * 24)); // Use Math.round for safety with DST etc.
+
+            if (diffDays === 1) { // Consecutive days
+                currentStreak.length++;
+            } else { // Streak broken or non-consecutive
+                if (currentStreak.length > maxStreak.length) {
+                    maxStreak.length = currentStreak.length;
+                    maxStreak.start = currentStreak.start;
+                    maxStreak.end = uniqueSortedDates[i-1]; 
+                }
+                currentStreak.start = uniqueSortedDates[i];
+                currentStreak.length = 1;
+            }
+        }
+        // Check the last streak after the loop concludes
+        if (currentStreak.length > maxStreak.length) {
+            maxStreak.length = currentStreak.length;
+            maxStreak.start = currentStreak.start;
+            maxStreak.end = uniqueSortedDates[uniqueSortedDates.length - 1];
+        }
+        stat.longest_daily_streak = {
+          start_date: maxStreak.start,
+          end_date: maxStreak.end,
+          length_days: maxStreak.length,
+        };
+      } else {
+         stat.longest_daily_streak = { start_date: null, end_date: null, length_days: 0 };
+      }
+    } else {
+      stat.longest_daily_streak = { start_date: null, end_date: null, length_days: 0 };
+    }
+
+    // Calculate Emojis
     const emojiCountsMap = (stat as any)._emojiCounts as Map<string, number>; 
     let sortedEmojis: { emoji: string; count: number }[] = [];
     if (emojiCountsMap) {
       sortedEmojis = Array.from(emojiCountsMap.entries())
         .map(([emoji, count]) => ({ emoji, count }))
         .sort((a, b) => b.count - a.count)
-        .slice(0, 5); // Get top 5 emojis
+        .slice(0, 5); 
     }
+    delete (stat as any)._emojiCounts;
 
-    return {
+    finalStats.push({
       ...stat,
       avg_message_length: stat.message_count > 0 ? stat.word_count / stat.message_count : 0,
       most_used_emojis: sortedEmojis,
-      // _emojiCounts: undefined, // Remove temporary field explicitly if needed, though it won't be in the returned object if not spread
-    };
-  });
+      // longest_daily_streak is already set on 'stat'
+    });
+  }
 
   return finalStats;
 }

@@ -20,7 +20,7 @@ export function StickyNavbar({ showSidebarTrigger = false }: { showSidebarTrigge
   const { activeTheme } = useThemeConfig()
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [isSheetOpen, setIsSheetOpen] = useState(false);
-
+  
   const handleThemeToggle = () => {
     const isGhibliActive = activeTheme.startsWith('default');
     if (resolvedTheme === 'light') {
@@ -73,7 +73,7 @@ export function StickyNavbar({ showSidebarTrigger = false }: { showSidebarTrigge
                 <SheetHeader className="mb-6 text-left">
                   <SheetTitle>
                     <Link href="/dashboard" onClick={() => setIsSheetOpen(false)} className="font-semibold text-lg bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
-                        WIT-REALITY
+                WIT-REALITY
                     </Link>
                   </SheetTitle>
                 </SheetHeader>
@@ -104,7 +104,7 @@ export function StickyNavbar({ showSidebarTrigger = false }: { showSidebarTrigge
                   <SignedIn>
                     <UserButton afterSignOutUrl="/" />
                   </SignedIn>
-                </div>
+            </div>
               </SheetContent>
             </Sheet>
           </div>
@@ -113,45 +113,45 @@ export function StickyNavbar({ showSidebarTrigger = false }: { showSidebarTrigge
           <div className="hidden md:flex flex-1 items-center">
             {/* Desktop Search: Centered */}
             <div className="flex-1 px-6 flex justify-center">
-              <div className="relative w-full max-w-md">
-                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input
-                  type="search"
-                  placeholder="Search..."
-                  className="w-full bg-muted/40 border-none pl-9 focus-visible:ring-primary/20"
-                />
-              </div>
+            <div className="relative w-full max-w-md">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                type="search"
+                placeholder="Search..."
+                className="w-full bg-muted/40 border-none pl-9 focus-visible:ring-primary/20"
+              />
             </div>
-
+          </div>
+          
             {/* Desktop Right Items */}
             <div className="flex items-center space-x-3">
-              <ThemeSelector />
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={handleThemeToggle}
-                className="h-9 w-9 rounded-full hover:bg-muted transition-colors"
-              >
-                <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-                <Moon className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-                <span className="sr-only">Toggle theme</span>
-              </Button>
-              
-              <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full hover:bg-muted transition-colors relative">
-                <Bell className="h-[1.2rem] w-[1.2rem]" />
-                <Badge className="absolute -top-1 -right-1 h-4 w-4 p-0 flex items-center justify-center bg-primary text-[10px]">
-                  3
-                </Badge>
+            <ThemeSelector />
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleThemeToggle}
+              className="h-9 w-9 rounded-full hover:bg-muted transition-colors"
+            >
+              <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+              <Moon className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+              <span className="sr-only">Toggle theme</span>
+            </Button>
+            
+            <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full hover:bg-muted transition-colors relative">
+              <Bell className="h-[1.2rem] w-[1.2rem]" />
+              <Badge className="absolute -top-1 -right-1 h-4 w-4 p-0 flex items-center justify-center bg-primary text-[10px]">
+                3
+              </Badge>
                 <span className="sr-only">Notifications</span>
-              </Button>
+            </Button>
 
-              <SignedOut>
+                <SignedOut>
                 <Button variant="outline" asChild><Link href="/sign-in">Login</Link></Button>
                 <Button asChild><Link href="/sign-up">Signup</Link></Button>
-              </SignedOut>
-              <SignedIn>
-                <UserButton afterSignOutUrl="/" />
-              </SignedIn>
+                </SignedOut>
+                <SignedIn>
+                  <UserButton afterSignOutUrl="/" />
+                </SignedIn>
             </div>
           </div>
         </div>
