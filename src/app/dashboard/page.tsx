@@ -167,7 +167,7 @@ const initialSentimentData: SentimentData = { sentiments: {}, most_positive: "N/
 const initialWordUsageData: WordUsageData = { total_words: 0, word_diversity: 0, words_per_message: 0, word_counts: [] };
 const initialEmojiData: EngineEmojiData = { emoji_usage: [] };
 const initialTimelineData: TimelineData = { monthly: [], daily: [] };
-const initialTimelineActivityData: TimelineActivityData = { daily: [], monthly: [], yearly: [] };
+const initialTimelineActivityData: TimelineActivityData = { daily: [], monthly: [], yearly: [] , weekly: []};
 const initialReplyTimeStats: UserReplyTimeStat[] = []; // Initial state for reply time stats
 const initialUserComparisonTimelineData: analysisEngine.UserComparisonTimelineData = { weekly: [], monthly: [], yearly: [] };
 
