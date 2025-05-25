@@ -170,7 +170,6 @@ const initialTimelineData: TimelineData = { monthly: [], daily: [] };
 const initialTimelineActivityData: TimelineActivityData = { daily: [], monthly: [], yearly: [] , weekly: []};
 const initialReplyTimeStats: UserReplyTimeStat[] = []; // Initial state for reply time stats
 const initialUserComparisonTimelineData: analysisEngine.UserComparisonTimelineData = { weekly: [], monthly: [], yearly: [] };
-
 export default function DashboardPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
