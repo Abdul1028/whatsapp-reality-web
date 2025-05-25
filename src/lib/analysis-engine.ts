@@ -169,50 +169,66 @@ export function calculateUserStats(data: DataFrameRow[]): UserStat[] {
 
 // Interfaces for Timeline Activity
 export interface ActivityPoint {
-  time_unit: string; // Format: YYYY-MM-DD for daily, YYYY-MM for monthly, YYYY for yearly
+  time_unit: string; // Format: YYYY-MM-DD for daily, YYYY-Www for weekly, YYYY-MM for monthly, YYYY for yearly
   message_count: number;
 }
 
 export interface TimelineActivityData {
   daily: ActivityPoint[];
+  weekly: ActivityPoint[]; // Added weekly
   monthly: ActivityPoint[];
   yearly: ActivityPoint[];
+}
+
+// Helper function to get ISO week number and year for a date (copied from later in the file for use here)
+function getISOWeekAndYearForTimeline(date: Date): { week: number; year: number } {
+  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+  const dayNum = d.getUTCDay() || 7; // Get day number, handling Sunday as 7
+  d.setUTCDate(d.getUTCDate() + 4 - dayNum); // Set to nearest Thursday
+  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+  // Calculate full weeks to nearest Thursday
+  const weekNum = Math.ceil((((d.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
+  return { week: weekNum, year: d.getUTCFullYear() };
 }
 
 export function calculateTimelineActivity(data: DataFrameRow[]): TimelineActivityData {
   console.log("[calculateTimelineActivity] Received data length:", data?.length);
 
   const dailyActivity = new Map<string, number>();
+  const weeklyActivity = new Map<string, number>(); // Added for weekly
   const monthlyActivity = new Map<string, number>();
   const yearlyActivity = new Map<string, number>();
 
   if (!data || data.length === 0) {
-    return { daily: [], monthly: [], yearly: [] };
+    return { daily: [], weekly: [], monthly: [], yearly: [] }; // Added weekly default
   }
 
   data.forEach((row, index) => {
     const date = new Date(row.date);
     
-    // Log first few processed dates for sanity check
-    if (index < 3) { // Log only for the first 3 rows to avoid spamming
+    if (index < 3) { 
       console.log(`[calculateTimelineActivity] Processing row ${index}: date=${row.date}, parsedDate=${date.toISOString()}`);
     }
 
-    // Ensure valid date before proceeding
     if (isNaN(date.getTime())) {
       console.warn(`Invalid date encountered for row: ${JSON.stringify(row)}`);
-      return; // Skip this row if the date is invalid
+      return; 
     }
 
     const year = date.getFullYear().toString();
-    const month = (date.getMonth() + 1).toString().padStart(2, '0'); // Month is 0-indexed
+    const month = (date.getMonth() + 1).toString().padStart(2, '0'); 
     const day = date.getDate().toString().padStart(2, '0');
 
     const dailyKey = `${year}-${month}-${day}`;
     const monthlyKey = `${year}-${month}`;
     const yearlyKey = year;
 
+    // Weekly Key Calculation
+    const { week: weekNum, year: weekYear } = getISOWeekAndYearForTimeline(date);
+    const weeklyKey = `${weekYear}-W${weekNum.toString().padStart(2, '0')}`;
+
     dailyActivity.set(dailyKey, (dailyActivity.get(dailyKey) || 0) + 1);
+    weeklyActivity.set(weeklyKey, (weeklyActivity.get(weeklyKey) || 0) + 1); // Aggregate weekly
     monthlyActivity.set(monthlyKey, (monthlyActivity.get(monthlyKey) || 0) + 1);
     yearlyActivity.set(yearlyKey, (yearlyActivity.get(yearlyKey) || 0) + 1);
   });
@@ -220,15 +236,16 @@ export function calculateTimelineActivity(data: DataFrameRow[]): TimelineActivit
   const formatMapToActivityPoints = (activityMap: Map<string, number>): ActivityPoint[] => {
     return Array.from(activityMap.entries())
       .map(([time_unit, message_count]) => ({ time_unit, message_count }))
-      .sort((a, b) => a.time_unit.localeCompare(b.time_unit)); // Sort chronologically
+      .sort((a, b) => a.time_unit.localeCompare(b.time_unit)); 
   };
 
   const result = {
     daily: formatMapToActivityPoints(dailyActivity),
+    weekly: formatMapToActivityPoints(weeklyActivity), // Add weekly to result
     monthly: formatMapToActivityPoints(monthlyActivity),
     yearly: formatMapToActivityPoints(yearlyActivity),
   };
-  console.log("[calculateTimelineActivity] Returning result:", JSON.stringify(result, null, 2));
+  console.log("[calculateTimelineActivity] Returning result (with weekly):", JSON.stringify(result, null, 2));
   return result;
 }
 
@@ -513,17 +530,6 @@ export interface UserComparisonTimelineData {
   yearly: UserTimelineDataPoint[];
 }
 
-// Helper function to get ISO week number and year for a date
-function getISOWeekAndYear(date: Date): { week: number; year: number } {
-  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
-  const dayNum = d.getUTCDay() || 7; // Get day number, handling Sunday as 7
-  d.setUTCDate(d.getUTCDate() + 4 - dayNum); // Set to nearest Thursday
-  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
-  // Calculate full weeks to nearest Thursday
-  const weekNum = Math.ceil((((d.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
-  return { week: weekNum, year: d.getUTCFullYear() };
-}
-
 export function calculateUserActivityTimeline(data: DataFrameRow[]): UserComparisonTimelineData {
   const weeklyActivity = new Map<string, Record<string, number>>(); // Key: YYYY-Www, Value: {user: count}
   const monthlyActivity = new Map<string, Record<string, number>>(); // Key: YYYY-MM, Value: {user: count}
@@ -558,7 +564,7 @@ export function calculateUserActivityTimeline(data: DataFrameRow[]): UserCompari
     monthlyActivity.set(monthKey, monthUserData);
 
     // Weekly
-    const { week, year: weekYear } = getISOWeekAndYear(date);
+    const { week, year: weekYear } = getISOWeekAndYearForTimeline(date);
     const weekKey = `${weekYear}-W${week.toString().padStart(2, '0')}`;
     const weekUserData = weeklyActivity.get(weekKey) || {};
     weekUserData[user] = (weekUserData[user] || 0) + 1;

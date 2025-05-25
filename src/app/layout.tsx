@@ -39,7 +39,7 @@ const isScaled = activeThemeValue?.endsWith("-scaled")
   
   return (
     <ClerkProvider>
-      <html lang="en" suppressHydrationWarning >
+      <html lang="en" suppressHydrationWarning  >
         <body
      className={cn(
       "bg-background overscroll-none font-sans antialiased",
