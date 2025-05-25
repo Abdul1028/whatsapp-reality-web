@@ -134,6 +134,7 @@ interface AnalysisResults {
   responseTimes: any[]; 
   messageLength: any[]; 
   moodShifts: any[];    
+  userComparisonTimelineData?: analysisEngine.UserComparisonTimelineData;
 }
 
 // Default initial values for robust loading
@@ -168,6 +169,7 @@ const initialEmojiData: EngineEmojiData = { emoji_usage: [] };
 const initialTimelineData: TimelineData = { monthly: [], daily: [] };
 const initialTimelineActivityData: TimelineActivityData = { daily: [], monthly: [], yearly: [] };
 const initialReplyTimeStats: UserReplyTimeStat[] = []; // Initial state for reply time stats
+const initialUserComparisonTimelineData: analysisEngine.UserComparisonTimelineData = { weekly: [], monthly: [], yearly: [] };
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -225,6 +227,7 @@ export default function DashboardPage() {
                     emoji: parsedLegacy.emoji || initialEmojiData,
                     timePatterns: parsedLegacy.timePatterns || initialTimePatternsData,
                     replyTimeStats: parsedLegacy.replyTimeStats || initialReplyTimeStats,
+                    userComparisonTimelineData: parsedLegacy.userComparisonTimelineData || initialUserComparisonTimelineData,
                     conversationFlow: parsedLegacy.conversationFlow || initialConversationFlowData,
                     conversationPatterns: parsedLegacy.conversationPatterns || [],
                     responseTimes: parsedLegacy.responseTimes || [],
@@ -274,6 +277,7 @@ export default function DashboardPage() {
         const calculatedEmojiUsage: EngineEmojiData = analysisEngine.calculateEmojiUsage(fetchedData);
         const calculatedTimePatterns: EngineTimePatternsData = analysisEngine.calculateTimePatterns(fetchedData);
         const calculatedReplyTimes: UserReplyTimeStat[] = analysisEngine.calculateReplyTimes(fetchedData); // Calculate reply times
+        const userComparisonTimeline = analysisEngine.calculateUserActivityTimeline(fetchedData); // <--- ADD THIS CALL
 
         let finalBasicStats: BasicStatsData = {
             total_messages: calculatedBasicStats.total_messages,
@@ -293,6 +297,7 @@ export default function DashboardPage() {
         let finalEmoji: EngineEmojiData = calculatedEmojiUsage;
         let finalTimePatterns: EngineTimePatternsData = calculatedTimePatterns; // Use newly calculated time patterns
         let finalReplyTimeStats: UserReplyTimeStat[] = calculatedReplyTimes; // Store calculated reply times
+        let finalUserComparisonTimeline = userComparisonTimeline; // <--- STORE THE RESULT
 
         // Load OTHER analysis parts from localStorage (transitional)
         const legacyStoredResults = localStorage.getItem("whatsappAnalysisResults");
@@ -347,6 +352,7 @@ export default function DashboardPage() {
             responseTimes: finalResponseTimes,
             messageLength: finalMsgLength,
             moodShifts: finalMoodShifts,
+            userComparisonTimelineData: finalUserComparisonTimeline, // <--- USE THE CALCULATED DATA HERE
         });
         toast.success("Analysis data loaded.", { id: "dashboard-loading" });
 
@@ -370,6 +376,7 @@ export default function DashboardPage() {
                     emoji: parsedLegacy.emoji || initialEmojiData,
                     timePatterns: parsedLegacy.timePatterns || initialTimePatternsData,
                     replyTimeStats: parsedLegacy.replyTimeStats || initialReplyTimeStats,
+                    userComparisonTimelineData: parsedLegacy.userComparisonTimelineData || initialUserComparisonTimelineData,
                     conversationFlow: parsedLegacy.conversationFlow || initialConversationFlowData,
                     conversationPatterns: parsedLegacy.conversationPatterns || [],
                     responseTimes: parsedLegacy.responseTimes || [],
@@ -451,6 +458,7 @@ export default function DashboardPage() {
           conversationPatterns={analysisResults.conversationPatterns}
           responseTimes={analysisResults.responseTimes}
           replyTimeStats={analysisResults.replyTimeStats}
+          userComparisonTimelineData={analysisResults.userComparisonTimelineData}
         />
       </Suspense>
 

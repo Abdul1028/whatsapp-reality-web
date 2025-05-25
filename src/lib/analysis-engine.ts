@@ -497,3 +497,88 @@ export function calculateReplyTimes(data: DataFrameRow[]): UserReplyTimeStat[] {
   // Sort by average reply time, fastest first. Users with no replies are already excluded.
   return result.sort((a, b) => (a.average_reply_time_seconds ?? Infinity) - (b.average_reply_time_seconds ?? Infinity));
 }     
+
+// START: New User Activity Timeline Analysis for Comparison Chart
+
+// Interface for the data structure expected by the comparison chart
+// This should ideally be shared from or aligned with dashboard-charts.tsx
+export interface UserTimelineDataPoint {
+  time_unit: string; // e.g., "2023-W40" (Weekly), "2023-10" (Monthly), "2023" (Yearly)
+  user_messages: Record<string, number>; // e.g., {"Alice": 10, "Bob": 5}
+}
+
+export interface UserComparisonTimelineData {
+  weekly: UserTimelineDataPoint[];
+  monthly: UserTimelineDataPoint[];
+  yearly: UserTimelineDataPoint[];
+}
+
+// Helper function to get ISO week number and year for a date
+function getISOWeekAndYear(date: Date): { week: number; year: number } {
+  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+  const dayNum = d.getUTCDay() || 7; // Get day number, handling Sunday as 7
+  d.setUTCDate(d.getUTCDate() + 4 - dayNum); // Set to nearest Thursday
+  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+  // Calculate full weeks to nearest Thursday
+  const weekNum = Math.ceil((((d.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
+  return { week: weekNum, year: d.getUTCFullYear() };
+}
+
+export function calculateUserActivityTimeline(data: DataFrameRow[]): UserComparisonTimelineData {
+  const weeklyActivity = new Map<string, Record<string, number>>(); // Key: YYYY-Www, Value: {user: count}
+  const monthlyActivity = new Map<string, Record<string, number>>(); // Key: YYYY-MM, Value: {user: count}
+  const yearlyActivity = new Map<string, Record<string, number>>();  // Key: YYYY,    Value: {user: count}
+
+  if (!data || data.length === 0) {
+    return { weekly: [], monthly: [], yearly: [] };
+  }
+
+  data.forEach(row => {
+    if (row.user === 'group_notification') return; // Skip group notifications
+
+    const date = new Date(row.date);
+    if (isNaN(date.getTime())) {
+      console.warn(`[calculateUserActivityTimeline] Invalid date for row:`, row);
+      return; // Skip invalid dates
+    }
+
+    const user = row.user;
+
+    // Yearly
+    const yearKey = date.getFullYear().toString();
+    const yearUserData = yearlyActivity.get(yearKey) || {};
+    yearUserData[user] = (yearUserData[user] || 0) + 1;
+    yearlyActivity.set(yearKey, yearUserData);
+
+    // Monthly
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const monthKey = `${yearKey}-${month}`;
+    const monthUserData = monthlyActivity.get(monthKey) || {};
+    monthUserData[user] = (monthUserData[user] || 0) + 1;
+    monthlyActivity.set(monthKey, monthUserData);
+
+    // Weekly
+    const { week, year: weekYear } = getISOWeekAndYear(date);
+    const weekKey = `${weekYear}-W${week.toString().padStart(2, '0')}`;
+    const weekUserData = weeklyActivity.get(weekKey) || {};
+    weekUserData[user] = (weekUserData[user] || 0) + 1;
+    weeklyActivity.set(weekKey, weekUserData);
+  });
+
+  const formatMapToTimelinePoints = (activityMap: Map<string, Record<string, number>>): UserTimelineDataPoint[] => {
+    return Array.from(activityMap.entries())
+      .map(([time_unit, user_messages]) => ({ time_unit, user_messages }))
+      .sort((a, b) => a.time_unit.localeCompare(b.time_unit)); // Sort chronologically
+  };
+
+  const result: UserComparisonTimelineData = {
+    weekly: formatMapToTimelinePoints(weeklyActivity),
+    monthly: formatMapToTimelinePoints(monthlyActivity),
+    yearly: formatMapToTimelinePoints(yearlyActivity),
+  };
+  
+  console.log("[calculateUserActivityTimeline] Generated data:", JSON.stringify(result, null, 2));
+  return result;
+}
+
+// END: New User Activity Timeline Analysis for Comparison Chart
