@@ -139,7 +139,7 @@ interface AnalysisResults {
   userComparisonTimelineData?: analysisEngine.UserComparisonTimelineData;
   messageTypeCounts?: MessageTypeCounts;
   sharedLinks?: SharedLinksData;
-  userMessageTypeBreakdown?: MessageTypeCounts;
+  userMessageTypeBreakdown?: analysisEngine.UserMessageTypeBreakdown[];
 }
 
 // Default initial values for robust loading
@@ -196,6 +196,8 @@ export default function DashboardPage() {
   const [stopWordsList, setStopWordsList] = useState<Set<string>>(new Set());
   const [messageTypeCounts, setMessageTypeCounts] = useState<MessageTypeCounts>(initialAnalysisMessageTypeCounts);
 
+
+
   useEffect(() => {
     // Fetch stop words
     async function fetchStopWords() {
@@ -249,7 +251,7 @@ export default function DashboardPage() {
                     moodShifts: parsedLegacy.moodShifts || [],
                     messageTypeCounts: parsedLegacy.messageTypeCounts || initialAnalysisMessageTypeCounts,
                     sharedLinks: parsedLegacy.sharedLinks || initialAnalysisSharedLinks,
-                    userMessageTypeBreakdown: parsedLegacy.userMessageTypeBreakdown || initialAnalysisMessageTypeCounts,
+                    userMessageTypeBreakdown: parsedLegacy.userMessageTypeBreakdown || [],
                 });
             } catch (e) {
                 setError("Failed to parse stored analysis data.");
@@ -358,6 +360,7 @@ export default function DashboardPage() {
             }
         }
         
+        
         setMessageTypeCounts(calculatedMessageTypeCounts);
         setAnalysisResults({
             basicStats: finalBasicStats,
@@ -376,7 +379,7 @@ export default function DashboardPage() {
             moodShifts: finalMoodShifts,
             userComparisonTimelineData: finalUserComparisonTimeline, // <--- USE THE CALCULATED DATA HERE
             messageTypeCounts: calculatedMessageTypeCounts,
-            sharedLinks: calculatedSharedLinks, // <-- CORRECT TYPE
+            sharedLinks: calculatedSharedLinks,
             userMessageTypeBreakdown: calculatedUserMessageTypeBreakdown,
         });
         toast.success("Analysis data loaded.", { id: "dashboard-loading" });
@@ -409,7 +412,7 @@ export default function DashboardPage() {
                     moodShifts: parsedLegacy.moodShifts || [],
                     messageTypeCounts: parsedLegacy.messageTypeCounts || initialAnalysisMessageTypeCounts,
                     sharedLinks: parsedLegacy.sharedLinks || initialAnalysisSharedLinks, // <-- FIXED
-                    userMessageTypeBreakdown: parsedLegacy.userMessageTypeBreakdown || initialAnalysisMessageTypeCounts,
+                    userMessageTypeBreakdown: parsedLegacy.userMessageTypeBreakdown || [],
                 });
             } catch (e) { /* Do nothing if legacy parsing also fails */ }
         }

@@ -56,17 +56,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import type { 
-    UserStat, 
-    BasicStats, 
-    TimelineActivityData, 
-    WordUsageData, 
-    EmojiData as EngineEmojiData, 
-    TimePatternsData as EngineTimePatternsData,
-    UserReplyTimeStat,
-    MessageTypeCounts, // <-- add` import
-    SharedLink,
-    UserMessageTypeBreakdown
+import type {
+  UserStat,
+  BasicStats,
+  TimelineActivityData,
+  WordUsageData,
+  EmojiData as EngineEmojiData,
+  TimePatternsData as EngineTimePatternsData,
+  UserReplyTimeStat,
+  MessageTypeCounts, // <-- add` import
+  SharedLink,
+  UserMessageTypeBreakdown
 } from '@/lib/analysis-engine';
 import { cn } from '@/lib/utils';
 import { type ChartConfig } from "@/components/ui/chart";
@@ -166,7 +166,7 @@ function formatSecondsToTime(totalSeconds: number | null | undefined): string {
   if (hours > 0) timeString += `${hours}h `;
   if (minutes > 0) timeString += `${minutes}m `;
   if (seconds > 0 || (hours === 0 && minutes === 0)) timeString += `${seconds}s`;
-  
+
   return timeString.trim() || "0s";
 }
 
@@ -185,12 +185,12 @@ const ChartToolbar = ({ title, data, description, onRefresh }: { title: string; 
       )}
       {data && (
         <Button variant="outline" size="icon" className="h-7 w-7" onClick={() => {
-            const jsonString = `data:text/json;charset=utf-8,${encodeURIComponent(JSON.stringify(data, null, 2))}`;
-            const link = document.createElement("a");
-            link.href = jsonString;
-            link.download = `${title.toLowerCase().replace(/\s+/g, '-')}-data.json`;
-            link.click();
-          }}>
+          const jsonString = `data:text/json;charset=utf-8,${encodeURIComponent(JSON.stringify(data, null, 2))}`;
+          const link = document.createElement("a");
+          link.href = jsonString;
+          link.download = `${title.toLowerCase().replace(/\s+/g, '-')}-data.json`;
+          link.click();
+        }}>
           <Download className="h-3.5 w-3.5" />
           <span className="sr-only">Download</span>
         </Button>
@@ -235,7 +235,7 @@ function UserComparisonTimelineCard({
       const totalWeeklyPages = Math.ceil(totalWeeklyDataPoints / WEEKS_PER_PAGE);
       setCurrentWeeklyPage(Math.max(0, totalWeeklyPages - 1));
     } else {
-      setCurrentWeeklyPage(0); 
+      setCurrentWeeklyPage(0);
     }
 
     // Initialize or reset monthly page to show the last page
@@ -270,17 +270,17 @@ function UserComparisonTimelineCard({
   }, [timeGranularity, selectedUser1, selectedUser2, userComparisonTimelineData?.weekly, userComparisonTimelineData?.monthly]);
 
   const handleUser1Change = (value: string) => {
-    if (value === selectedUser2) { 
+    if (value === selectedUser2) {
       const oldUser1 = selectedUser1;
       setSelectedUser1(value);
-      setSelectedUser2(oldUser1); 
+      setSelectedUser2(oldUser1);
     } else {
       setSelectedUser1(value);
     }
   };
 
   const handleUser2Change = (value: string) => {
-    if (value === selectedUser1) { 
+    if (value === selectedUser1) {
       const oldUser2 = selectedUser2;
       setSelectedUser2(value);
       setSelectedUser1(oldUser2);
@@ -288,7 +288,7 @@ function UserComparisonTimelineCard({
       setSelectedUser2(value);
     }
   };
-  
+
   const availableUsersForUser1 = allUsers.filter(u => u !== selectedUser2);
   const availableUsersForUser2 = allUsers.filter(u => u !== selectedUser1);
 
@@ -306,21 +306,21 @@ function UserComparisonTimelineCard({
 
   const noDataForAllGranularities = !userComparisonTimelineData ||
     (userComparisonTimelineData.weekly.length === 0 &&
-     userComparisonTimelineData.monthly.length === 0 &&
-     userComparisonTimelineData.yearly.length === 0);
+      userComparisonTimelineData.monthly.length === 0 &&
+      userComparisonTimelineData.yearly.length === 0);
 
   if (noDataForAllGranularities) {
     return (
-        <Card className="col-span-1 md:col-span-3">
-            <CardHeader>
-                 <ChartToolbar title="User Activity Comparison" description="Not enough data to display comparison chart." />
-            </CardHeader>
-            <CardContent className="flex flex-col items-center justify-center h-[350px] text-center">
-                <LineChartIcon className="h-12 w-12 text-muted-foreground mb-4" />
-                <p className="text-lg text-muted-foreground">Data for user comparison timeline is not available.</p>
-                <p className="text-sm text-muted-foreground mt-1">Please ensure the chat analysis provides this information.</p>
-            </CardContent>
-        </Card>
+      <Card className="col-span-1 md:col-span-3">
+        <CardHeader>
+          <ChartToolbar title="User Activity Comparison" description="Not enough data to display comparison chart." />
+        </CardHeader>
+        <CardContent className="flex flex-col items-center justify-center h-[350px] text-center">
+          <LineChartIcon className="h-12 w-12 text-muted-foreground mb-4" />
+          <p className="text-lg text-muted-foreground">Data for user comparison timeline is not available.</p>
+          <p className="text-sm text-muted-foreground mt-1">Please ensure the chat analysis provides this information.</p>
+        </CardContent>
+      </Card>
     );
   }
 
@@ -334,7 +334,7 @@ function UserComparisonTimelineCard({
     if (!userComparisonTimelineData || !selectedUser1) {
       return [];
     }
-    
+
     let dataForGranularity = userComparisonTimelineData[timeGranularity] || [];
 
     if (timeGranularity === "weekly") {
@@ -384,37 +384,37 @@ function UserComparisonTimelineCard({
     }
     return config;
   }, [selectedUser1, selectedUser2, chartColors]);
-  
+
   const formatTimeUnitTick = (timeUnit: string): string => {
     try {
-      if (timeGranularity === "yearly") return timeUnit; 
-      if (timeGranularity === "monthly") { 
+      if (timeGranularity === "yearly") return timeUnit;
+      if (timeGranularity === "monthly") {
         const [year, month] = timeUnit.split('-');
         return new Date(Number(year), Number(month) - 1).toLocaleDateString('default', { month: 'short', year: '2-digit' });
       }
-      if (timeGranularity === "weekly") { 
-         const parts = timeUnit.split(/-W|-/);
-         return `W${parts[1]} '${parts[0].slice(2)}`;
+      if (timeGranularity === "weekly") {
+        const parts = timeUnit.split(/-W|-/);
+        return `W${parts[1]} '${parts[0].slice(2)}`;
       }
     } catch (e) { console.warn("Error formatting time unit tick:", e); }
     return timeUnit;
   };
 
   const formatTooltipLabel = (label: string): string => {
-     try {
-        if (timeGranularity === "yearly") return `Year: ${label}`;
-        if (timeGranularity === "monthly") {
-          const [year, month] = label.split('-');
-          return `Month: ${new Date(Number(year), Number(month)-1).toLocaleString('default', { month: 'long', year: 'numeric' })}`;
-        }
-        if (timeGranularity === "weekly") {
-           const parts = label.split(/-W|-/);
-           return `Week ${parts[1]}, ${parts[0]}`;
-        }
-     } catch(e) { console.warn("Error formatting tooltip label:", e); }
-     return label;
+    try {
+      if (timeGranularity === "yearly") return `Year: ${label}`;
+      if (timeGranularity === "monthly") {
+        const [year, month] = label.split('-');
+        return `Month: ${new Date(Number(year), Number(month) - 1).toLocaleString('default', { month: 'long', year: 'numeric' })}`;
+      }
+      if (timeGranularity === "weekly") {
+        const parts = label.split(/-W|-/);
+        return `Week ${parts[1]}, ${parts[0]}`;
+      }
+    } catch (e) { console.warn("Error formatting tooltip label:", e); }
+    return label;
   };
-  
+
   const hasActualPointsToPlot = chartDisplayData.length > 0 && (selectedUser1 || selectedUser2);
 
   let toolbarDesc = "User Activity Comparison";
@@ -430,9 +430,9 @@ function UserComparisonTimelineCard({
     <Card className="col-span-1 md:col-span-3">
       <CardHeader>
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
-          <ChartToolbar 
-            title="User Activity Comparison" 
-            data={hasActualPointsToPlot ? chartDisplayData : undefined} 
+          <ChartToolbar
+            title="User Activity Comparison"
+            data={hasActualPointsToPlot ? chartDisplayData : undefined}
             description={toolbarDesc}
             onRefresh={() => { /* Add refresh logic if needed */ }}
           />
@@ -444,7 +444,7 @@ function UserComparisonTimelineCard({
             </TabsList>
           </Tabs>
         </div>
-        {allUsers.length > 1 && (selectedUser1 || selectedUser2) && ( 
+        {allUsers.length > 1 && (selectedUser1 || selectedUser2) && (
           <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
             {selectedUser1 && allUsers.length > 1 && (
               <Select value={selectedUser1} onValueChange={handleUser1Change}>
@@ -453,18 +453,18 @@ function UserComparisonTimelineCard({
               </Select>
             )}
             {selectedUser1 && allUsers.filter(u => u !== selectedUser1).length > 0 && (
-             <Select value={selectedUser2 ?? undefined} onValueChange={handleUser2Change} disabled={!selectedUser1}>
+              <Select value={selectedUser2 ?? undefined} onValueChange={handleUser2Change} disabled={!selectedUser1}>
                 <SelectTrigger className="h-8"><SelectValue placeholder="Select User 2 (Optional)" /></SelectTrigger>
                 <SelectContent>{allUsers.filter(u => u !== selectedUser1).map(user => (<SelectItem key={`user2-${user}`} value={user}>{user}</SelectItem>))}</SelectContent>
               </Select>
             )}
           </div>
         )}
-        {/* Weekly Pagination Controls */} 
+        {/* Weekly Pagination Controls */}
         {timeGranularity === "weekly" && totalWeeklyPages > 1 && (
           <div className="mt-3 flex items-center justify-center gap-2">
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               size="sm"
               onClick={() => setCurrentWeeklyPage(prev => Math.max(0, prev - 1))}
               disabled={currentWeeklyPage === 0}
@@ -474,8 +474,8 @@ function UserComparisonTimelineCard({
             <span className="text-sm text-muted-foreground">
               Page {currentWeeklyPage + 1} of {totalWeeklyPages}
             </span>
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               size="sm"
               onClick={() => setCurrentWeeklyPage(prev => Math.min(totalWeeklyPages - 1, prev + 1))}
               disabled={currentWeeklyPage >= totalWeeklyPages - 1}
@@ -484,11 +484,11 @@ function UserComparisonTimelineCard({
             </Button>
           </div>
         )}
-        {/* Monthly Pagination Controls */} 
+        {/* Monthly Pagination Controls */}
         {timeGranularity === "monthly" && totalMonthlyPages > 1 && (
           <div className="mt-3 flex items-center justify-center gap-2">
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               size="sm"
               onClick={() => setCurrentMonthlyPage(prev => Math.max(0, prev - 1))}
               disabled={currentMonthlyPage === 0}
@@ -498,8 +498,8 @@ function UserComparisonTimelineCard({
             <span className="text-sm text-muted-foreground">
               Page {currentMonthlyPage + 1} of {totalMonthlyPages}
             </span>
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               size="sm"
               onClick={() => setCurrentMonthlyPage(prev => Math.min(totalMonthlyPages - 1, prev + 1))}
               disabled={currentMonthlyPage >= totalMonthlyPages - 1}
@@ -529,19 +529,19 @@ function UserComparisonTimelineCard({
                   )}
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
-                <XAxis 
-                  dataKey="time_unit" 
+                <XAxis
+                  dataKey="time_unit"
                   tickFormatter={formatTimeUnitTick}
                   angle={isMobile ? -60 : ((selectedUser1 && selectedUser2 && allUsers.length > 2) || (selectedUser1 && allUsers.length > 2 && timeGranularity !== 'yearly') ? -45 : 0)}
                   textAnchor={isMobile ? "end" : ((selectedUser1 && selectedUser2 && allUsers.length > 2) || (selectedUser1 && allUsers.length > 2 && timeGranularity !== 'yearly') ? "end" : "middle")}
                   height={isMobile ? 80 : ((selectedUser1 && selectedUser2 && allUsers.length > 2) || (selectedUser1 && allUsers.length > 2 && timeGranularity !== 'yearly') ? 70 : 30)}
-                  interval={isMobile && (timeGranularity === "monthly" || timeGranularity === "weekly") ? 0 : 'preserveStartEnd'} 
-                  minTickGap={isMobile ? 5 : 20} 
+                  interval={isMobile && (timeGranularity === "monthly" || timeGranularity === "weekly") ? 0 : 'preserveStartEnd'}
+                  minTickGap={isMobile ? 5 : 20}
                   tick={{ fontSize: isMobile ? '10px' : '12px' }}
                 />
                 <YAxis allowDecimals={false} tick={{ fontSize: isMobile ? '10px' : '12px' }} />
-                <Tooltip 
-                  labelFormatter={formatTooltipLabel} 
+                <Tooltip
+                  labelFormatter={formatTooltipLabel}
                   formatter={(value: number, name: string) => [value.toLocaleString(), name]}
                   itemStyle={{ fontSize: '12px' }}
                   labelStyle={{ fontSize: '13px', fontWeight: 'bold' }}
@@ -591,7 +591,7 @@ export function DashboardCharts({
   sharedLinks,
   userMessageTypeBreakdown,
 }: DashboardChartsProps) {
-  
+
   const isMobile = useMediaQuery('(max-width: 768px)');
 
   // State and Ref Hooks first
@@ -639,7 +639,7 @@ export function DashboardCharts({
     try {
       return new Date(dateString).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
     } catch (e) {
-      return dateString; 
+      return dateString;
     }
   };
 
@@ -696,23 +696,23 @@ export function DashboardCharts({
   };
 
 
-     
+
   {
-    console.log("sharedLinks",sharedLinks)
-  }
-    
-  {
-    console.log("userMessageTypeBreakdown",userMessageTypeBreakdown)
-    console.log("wordUsage",wordUsage)
-    console.log("emojiData",emojiData)
+    console.log("sharedLinks", sharedLinks)
   }
 
+  {
+    console.log("userMessageTypeBreakdown", userMessageTypeBreakdown)
+    console.log("wordUsage", wordUsage)
+    console.log("emojiData", emojiData)
+  }
 
 
-    
-    
 
-  
+
+
+
+
 
   const handlePreviousWords = () => {
     setCurrentWordPage(prevPage => Math.max(0, prevPage - 1));
@@ -742,7 +742,7 @@ export function DashboardCharts({
 
   const fastestReplier = React.useMemo(() => {
     if (!replyTimeStats || replyTimeStats.length === 0) return null;
-    return replyTimeStats[0]; 
+    return replyTimeStats[0];
   }, [replyTimeStats]);
 
   const slowestReplier = React.useMemo(() => {
@@ -757,27 +757,27 @@ export function DashboardCharts({
 
 
 
-// User Feature Usage pagination logic
-const totalUserFeaturePages = React.useMemo(() => {
-  if (!userMessageTypeBreakdown || userMessageTypeBreakdown.length === 0) return 0;
-  return Math.ceil(userMessageTypeBreakdown.length / USERS_PER_PAGE);
-}, [userMessageTypeBreakdown]);
+  // User Feature Usage pagination logic
+  const totalUserFeaturePages = React.useMemo(() => {
+    if (!userMessageTypeBreakdown || userMessageTypeBreakdown.length === 0) return 0;
+    return Math.ceil(userMessageTypeBreakdown.length / USERS_PER_PAGE);
+  }, [userMessageTypeBreakdown]);
 
-const visibleUserFeatureBreakdown = React.useMemo(() => {
-  if (!userMessageTypeBreakdown) return [];
-  const startIndex = currentUserFeaturePage * USERS_PER_PAGE;
-  const endIndex = startIndex + USERS_PER_PAGE;
-  return userMessageTypeBreakdown.slice(startIndex, endIndex);
-}, [userMessageTypeBreakdown, currentUserFeaturePage]);
+  const visibleUserFeatureBreakdown = React.useMemo(() => {
+    if (!userMessageTypeBreakdown) return [];
+    const startIndex = currentUserFeaturePage * USERS_PER_PAGE;
+    const endIndex = startIndex + USERS_PER_PAGE;
+    return userMessageTypeBreakdown.slice(startIndex, endIndex);
+  }, [userMessageTypeBreakdown, currentUserFeaturePage]);
 
-const handleNextUserFeaturePage = () => {
-  if (userMessageTypeBreakdown && (currentUserFeaturePage + 1) * USERS_PER_PAGE < userMessageTypeBreakdown.length) {
-    setCurrentUserFeaturePage(prevPage => prevPage + 1);
-  }
-};
-const handlePreviousUserFeaturePage = () => {
-  setCurrentUserFeaturePage(prevPage => Math.max(0, prevPage - 1));
-};
+  const handleNextUserFeaturePage = () => {
+    if (userMessageTypeBreakdown && (currentUserFeaturePage + 1) * USERS_PER_PAGE < userMessageTypeBreakdown.length) {
+      setCurrentUserFeaturePage(prevPage => prevPage + 1);
+    }
+  };
+  const handlePreviousUserFeaturePage = () => {
+    setCurrentUserFeaturePage(prevPage => Math.max(0, prevPage - 1));
+  };
 
   // --- Message Activity Timeline: Pagination & Data Slicing --- 
   // Use the extended type for internal logic.
@@ -794,12 +794,12 @@ const handlePreviousUserFeaturePage = () => {
       const totalPages = Math.ceil(currentTimelineData.monthly.length / TIMELINE_MONTHS_PER_PAGE);
       setCurrentTimelineMonthlyPage(Math.max(0, totalPages - 1));
     }
-  }, [currentTimelineData]); 
+  }, [currentTimelineData]);
 
   React.useEffect(() => {
     if (timelineGranularityReact === "weekly" && currentTimelineData?.weekly && currentTimelineData.weekly.length > 0) {
       const totalPages = Math.ceil(currentTimelineData.weekly.length / TIMELINE_WEEKS_PER_PAGE);
-      setCurrentTimelineWeeklyPage(prev => Math.min(prev, Math.max(0, totalPages - 1))); 
+      setCurrentTimelineWeeklyPage(prev => Math.min(prev, Math.max(0, totalPages - 1)));
     } else if (timelineGranularityReact === "monthly" && currentTimelineData?.monthly && currentTimelineData.monthly.length > 0) {
       const totalPages = Math.ceil(currentTimelineData.monthly.length / TIMELINE_MONTHS_PER_PAGE);
       setCurrentTimelineMonthlyPage(prev => Math.min(prev, Math.max(0, totalPages - 1)));
@@ -808,7 +808,7 @@ const handlePreviousUserFeaturePage = () => {
 
   const timelineChartDisplayData = React.useMemo(() => {
     if (!currentTimelineData) return []; // Guard against undefined timelineActivityData
-    
+
     let dataForGranularity: { time_unit: string; message_count: number }[] = [];
 
     if (timelineGranularityReact === "weekly") {
@@ -836,12 +836,12 @@ const handlePreviousUserFeaturePage = () => {
   // --- End Message Activity Timeline Pagination --- 
 
 
-      {/* VVVVVV ADD THESE LOGS HERE VVVVVV */}
-      console.log("--- DEBUG: About to render Message Activity Timeline ---");
-      console.log("timelineActivityData for Message Timeline:", timelineActivityData);
-      console.log("timelineGranularityReact for Message Timeline:", timelineGranularityReact);
-      console.log("timelineChartDisplayData for Message Timeline:", timelineChartDisplayData);
-      {/* ^^^^^^ ADD THESE LOGS HERE ^^^^^^ */}
+  {/* VVVVVV ADD THESE LOGS HERE VVVVVV */ }
+  console.log("--- DEBUG: About to render Message Activity Timeline ---");
+  console.log("timelineActivityData for Message Timeline:", timelineActivityData);
+  console.log("timelineGranularityReact for Message Timeline:", timelineGranularityReact);
+  console.log("timelineChartDisplayData for Message Timeline:", timelineChartDisplayData);
+  {/* ^^^^^^ ADD THESE LOGS HERE ^^^^^^ */ }
 
   const overallLongestStreak = React.useMemo(() => {
     if (!userActivity || userActivity.length === 0) {
@@ -850,8 +850,8 @@ const handlePreviousUserFeaturePage = () => {
     let longestStreakHolder: UserStat | null = null;
     for (const stat of userActivity) {
       if (stat.longest_daily_streak && stat.longest_daily_streak.length_days > 0) {
-        if (!longestStreakHolder || 
-            (longestStreakHolder.longest_daily_streak && stat.longest_daily_streak.length_days > longestStreakHolder.longest_daily_streak.length_days)) {
+        if (!longestStreakHolder ||
+          (longestStreakHolder.longest_daily_streak && stat.longest_daily_streak.length_days > longestStreakHolder.longest_daily_streak.length_days)) {
           longestStreakHolder = stat;
         }
       }
@@ -927,8 +927,8 @@ const handlePreviousUserFeaturePage = () => {
         </Card>
       )}
 
-            {/* Message Activity Timeline Chart */}
-            {timelineActivityData && (
+      {/* Message Activity Timeline Chart */}
+      {timelineActivityData && (
         <Card className="col-span-1 md:col-span-3">
           <CardHeader>
             <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
@@ -949,7 +949,7 @@ const handlePreviousUserFeaturePage = () => {
                 <Button variant="outline" size="sm" onClick={() => setCurrentTimelineWeeklyPage(prev => Math.min(totalTimelineWeeklyPages - 1, prev + 1))} disabled={currentTimelineWeeklyPage >= totalTimelineWeeklyPages - 1}>Next Weeks</Button>
               </div>
 
-              
+
             )}
             {/* Monthly Pagination for Timeline */}
             {timelineGranularityReact === "monthly" && totalTimelineMonthlyPages > 1 && (
@@ -961,51 +961,51 @@ const handlePreviousUserFeaturePage = () => {
             )}
           </CardHeader>
           <CardContent className="p-0 sm:p-6">
-             {timelineChartDisplayData.length > 0 ? (
+            {timelineChartDisplayData.length > 0 ? (
               <div className="h-[350px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={timelineChartDisplayData} margin={{ top: 5, right: isMobile? 10 : 20, bottom: isMobile ? 70 : 50, left: isMobile ? -10 : 5 }}>
+                  <BarChart data={timelineChartDisplayData} margin={{ top: 5, right: isMobile ? 10 : 20, bottom: isMobile ? 70 : 50, left: isMobile ? -10 : 5 }}>
                     <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
-                    <XAxis 
-                      dataKey="time_unit" 
-                      angle={isMobile ? -60 : -45} 
-                      textAnchor="end" 
-                      height={isMobile ? 80 : 70} 
+                    <XAxis
+                      dataKey="time_unit"
+                      angle={isMobile ? -60 : -45}
+                      textAnchor="end"
+                      height={isMobile ? 80 : 70}
                       interval={timelineGranularityReact === 'weekly' ? 5 : 0} // Set interval to 5 for weekly, 0 for others
                       minTickGap={isMobile ? -5 : 0}
                       tick={{ fontSize: isMobile ? '10px' : '11px' }}
                       tickFormatter={(tick) => {
                         if (timelineGranularityReact === 'yearly') return tick;
-                        if (timelineGranularityReact === 'monthly') { 
-                          const [year, month] = String(tick).split('-'); 
-                          try { return new Date(Number(year), Number(month)-1).toLocaleDateString('default', { month: 'short', year: '2-digit' }); } catch (e) { return String(tick); }
+                        if (timelineGranularityReact === 'monthly') {
+                          const [year, month] = String(tick).split('-');
+                          try { return new Date(Number(year), Number(month) - 1).toLocaleDateString('default', { month: 'short', year: '2-digit' }); } catch (e) { return String(tick); }
                         }
-                        if (timelineGranularityReact === 'weekly') { 
-                           const parts = String(tick).split(/-W|-/);
-                           if (parts.length === 2 && parts[0].length === 4 && parts[1].length >= 1) {
-                               return `W${parts[1]} '${parts[0].slice(2)}`;
-                           }
-                           return String(tick); // Fallback
+                        if (timelineGranularityReact === 'weekly') {
+                          const parts = String(tick).split(/-W|-/);
+                          if (parts.length === 2 && parts[0].length === 4 && parts[1].length >= 1) {
+                            return `W${parts[1]} '${parts[0].slice(2)}`;
+                          }
+                          return String(tick); // Fallback
                         }
-                        return String(tick); 
-                      }}/>
-                    <YAxis tick={{ fontSize: isMobile ? '10px' : '11px' }}/>
+                        return String(tick);
+                      }} />
+                    <YAxis tick={{ fontSize: isMobile ? '10px' : '11px' }} />
                     <Tooltip labelFormatter={(label) => {
-                         if (timelineGranularityReact === 'yearly') return `Year: ${String(label)}`;
-                         if (timelineGranularityReact === 'monthly') { 
-                           const [year, month] = String(label).split('-'); 
-                           try { return `Month: ${new Date(Number(year), Number(month)-1).toLocaleString('default', { month: 'long', year: 'numeric' })}`; } catch (e) { return String(label); }
-                         }
-                         if (timelineGranularityReact === 'weekly') { 
-                            const parts = String(label).split(/-W|-/);
-                            if (parts.length === 2 && parts[0].length === 4 && parts[1].length >= 1) {
-                                return `Week ${parts[1]}, ${parts[0]}`;
-                            }
-                            return String(label); // Fallback
-                         }
-                         return `Date: ${String(label)}`; 
-                      }}
-                      formatter={(value: number) => [value.toLocaleString(), "Messages"]}/>
+                      if (timelineGranularityReact === 'yearly') return `Year: ${String(label)}`;
+                      if (timelineGranularityReact === 'monthly') {
+                        const [year, month] = String(label).split('-');
+                        try { return `Month: ${new Date(Number(year), Number(month) - 1).toLocaleString('default', { month: 'long', year: 'numeric' })}`; } catch (e) { return String(label); }
+                      }
+                      if (timelineGranularityReact === 'weekly') {
+                        const parts = String(label).split(/-W|-/);
+                        if (parts.length === 2 && parts[0].length === 4 && parts[1].length >= 1) {
+                          return `Week ${parts[1]}, ${parts[0]}`;
+                        }
+                        return String(label); // Fallback
+                      }
+                      return `Date: ${String(label)}`;
+                    }}
+                      formatter={(value: number) => [value.toLocaleString(), "Messages"]} />
                     <Bar dataKey="message_count" name="Messages" fill="var(--primary)" radius={[4, 4, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
@@ -1030,9 +1030,9 @@ const handlePreviousUserFeaturePage = () => {
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={timePatternsData.hourly_activity.sort((a, b) => a.hour - b.hour)} margin={{ top: 5, right: 20, left: isMobile ? -10 : 0, bottom: isMobile ? 20 : 5 }}>
                   <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
-                  <XAxis 
-                    dataKey="hour" 
-                    tickFormatter={(hour) => { const h = parseInt(hour as string, 10); if (h === 0) return "12AM"; if (h === 12) return "12PM"; if (h < 12) return `${h}AM`; return `${h - 12}PM`;}}
+                  <XAxis
+                    dataKey="hour"
+                    tickFormatter={(hour) => { const h = parseInt(hour as string, 10); if (h === 0) return "12AM"; if (h === 12) return "12PM"; if (h < 12) return `${h}AM`; return `${h - 12}PM`; }}
                     interval={isMobile ? 3 : 1}
                     angle={isMobile ? -45 : 0}
                     textAnchor={isMobile ? 'end' : 'middle'}
@@ -1041,8 +1041,8 @@ const handlePreviousUserFeaturePage = () => {
                     minTickGap={isMobile ? 0 : 5}
                   />
                   <YAxis allowDecimals={false} tick={{ fontSize: isMobile ? '10px' : '12px' }} />
-                  <Tooltip labelFormatter={(label) => { const h = parseInt(label as string, 10); if (h === 0) return "12 AM"; if (h === 12) return "12 PM"; if (h < 12) return `${h} AM`; return `${h - 12} PM`;}}
-                    formatter={(value: number) => [value.toLocaleString(), "Messages"]}/>
+                  <Tooltip labelFormatter={(label) => { const h = parseInt(label as string, 10); if (h === 0) return "12 AM"; if (h === 12) return "12 PM"; if (h < 12) return `${h} AM`; return `${h - 12} PM`; }}
+                    formatter={(value: number) => [value.toLocaleString(), "Messages"]} />
                   <Legend wrapperStyle={{ fontSize: isMobile ? '11px' : '12px' }} />
                   <Line type="monotone" dataKey="message_count" name="Messages" stroke="var(--primary)" strokeWidth={2} dot={{ r: isMobile ? 2 : 3 }} activeDot={{ r: isMobile ? 4 : 6 }} />
                 </LineChart>
@@ -1052,8 +1052,8 @@ const handlePreviousUserFeaturePage = () => {
         </Card>
       )}
 
-            {/* User Activity Section with Tabs */}
-            {userActivity && userActivity.length > 0 && sortedUserActivity.length > 0 && (
+      {/* User Activity Section with Tabs */}
+      {userActivity && userActivity.length > 0 && sortedUserActivity.length > 0 && (
         <Card className="col-span-1 md:col-span-3">
           <Tabs defaultValue="donut" className="w-full">
             <CardHeader className="px-2 sm:px-6 pt-2 sm:pt-4 pb-0">
@@ -1070,7 +1070,7 @@ const handlePreviousUserFeaturePage = () => {
                           {sortedUserActivity.slice(0, 8).map((entry, index) => (<Cell key={`cell-user-donut-${index}`} fill={COLORS[index % COLORS.length]} />))}
                         </Pie>
                         <Tooltip formatter={(value: number, name: string) => [value.toLocaleString(), `Messages by ${name}`]} />
-                        <Legend iconSize={10} formatter={(value) => { const userName = value as string; const userColor = COLORS[sortedUserActivity.findIndex(u => u.user === userName) % COLORS.length] || '#000'; return <span style={{ color: userColor }}>{userName.length > 20 ? userName.slice(0, 18) + '...' : userName}</span>; }} wrapperStyle={{fontSize: '12px'}}/>
+                        <Legend iconSize={10} formatter={(value) => { const userName = value as string; const userColor = COLORS[sortedUserActivity.findIndex(u => u.user === userName) % COLORS.length] || '#000'; return <span style={{ color: userColor }}>{userName.length > 20 ? userName.slice(0, 18) + '...' : userName}</span>; }} wrapperStyle={{ fontSize: '12px' }} />
                       </PieChart>
                     </ResponsiveContainer>
                   </div>
@@ -1085,7 +1085,7 @@ const handlePreviousUserFeaturePage = () => {
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart data={visibleUserActivity} margin={{ top: 5, right: 20, bottom: 70, left: 5 }}>
                         <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
-                        <XAxis dataKey="user" angle={-45} textAnchor="end" interval={0} height={80}/>
+                        <XAxis dataKey="user" angle={-45} textAnchor="end" interval={0} height={80} />
                         <YAxis allowDecimals={false} />
                         <Tooltip formatter={(value: number) => [value.toLocaleString(), "Messages"]} />
                         <Bar dataKey="message_count" name="Messages" fill="var(--primary)" radius={[4, 4, 0, 0]}><LabelList dataKey="message_count" position="top" formatter={(value: number) => value.toLocaleString()} /></Bar>
@@ -1108,131 +1108,34 @@ const handlePreviousUserFeaturePage = () => {
 
       {/* UserComparisonTimelineCard */}
       {allUserNames.length > 0 && (
-        <UserComparisonTimelineCard 
-          userComparisonTimelineData={userComparisonTimelineData} 
+        <UserComparisonTimelineCard
+          userComparisonTimelineData={userComparisonTimelineData}
           allUsers={allUserNames}
-          chartColors={COLORS} 
+          chartColors={COLORS}
         />
       )}
-      
-      {/* Hourly Activity Bar Chart */}
-      {timePatternsData && timePatternsData.hourly_activity && (
-        <Card className="col-span-1 md:col-span-2 lg:col-span-3">
-          <CardHeader className="pb-0"><ChartToolbar title="Hourly Activity (All Messages)" data={timePatternsData.hourly_activity} onRefresh={() => setRefreshKey(prev => prev + 1)} /></CardHeader>
-          <CardContent className="p-0 sm:p-6">
-            <div className="h-[300px] w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart 
-                  data={timePatternsData.hourly_activity} 
-                  margin={isMobile ? { top: 20, right: 10, bottom: 50, left: 5 } : { top: 20, right: 20, bottom: 20, left: 20 }}
-                >
-                  <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
-                  <XAxis 
-                    dataKey="hour" 
-                    name="Hour of Day" 
-                    tickFormatter={(hour) => { const h = parseInt(hour as string, 10); if (h === 0) return "12AM"; if (h === 12) return "12PM"; if (h < 12) return `${h}AM`; return `${h - 12}PM`;}}
-                    interval={isMobile ? 2 : 0}                    
-                    angle={isMobile ? -45 : 0}
-                    textAnchor={isMobile ? 'end' : 'middle'}
-                    height={isMobile ? 50 : 30}                    
-                    tick={{ fontSize: isMobile ? '10px' : '12px' }}
-                    minTickGap={isMobile ? 0 : 5}
-                  />
-                  <YAxis name="Messages" allowDecimals={false} tick={{ fontSize: isMobile ? '10px' : '12px' }} />
-                  <Tooltip labelFormatter={(label) => { const h = parseInt(label as string, 10); if (h === 0) return "12 AM"; if (h === 12) return "12 PM"; if (h < 12) return `${h} AM`; return `${h - 12} PM`;}}
-                    formatter={(value: number) => [value.toLocaleString(), "Messages"]}/>
-                  <Legend wrapperStyle={{ fontSize: isMobile ? '11px' : '12px' }} />
-                  <Bar dataKey="message_count" name="Messages" fill="var(--primary)" radius={[4, 4, 0, 0]} barSize={isMobile ? 10 : undefined} />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-    {/* Render Average Conversation Stats Below Basic Statistics */}
-    {averageConversationStats && (
-      <Card className="col-span-1 md:col-span-3">
-        <CardHeader>
-          <ChartToolbar
-            title="Average Conversation Length" 
-            description="Analysis of conversation durations and message counts."
-            data={conversationFlowData?.conversation_stats}
-            onRefresh={() => setRefreshKey(prev => prev + 1)}
-          />
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mt-2">
-            <div className="flex flex-col items-center sm:items-start">
-              <span className="text-2xl font-bold text-primary">{averageConversationStats.avgDurationMinutes.toFixed(1)} min</span>
-              <span className="text-xs text-muted-foreground">Avg. Conversation Duration</span>
-            </div>
-            <div className="flex flex-col items-center sm:items-start">
-              <span className="text-2xl font-bold text-primary">{averageConversationStats.avgMessages.toFixed(1)}</span>
-              <span className="text-xs text-muted-foreground">Avg. Messages per Conversation</span>
-            </div>
-            <div className="flex flex-col items-center sm:items-start">
-              <span className="text-2xl font-bold text-primary">{averageConversationStats.totalConversations.toLocaleString()}</span>
-              <span className="text-xs text-muted-foreground">Total Conversations</span>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent className="p-0 sm:p-6">
-          {conversationFlowData && conversationFlowData.conversation_stats.length > 0 ? (
-            <div className="h-[300px] w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={conversationFlowData.conversation_stats} margin={{ top: 10, right: 30, left: 10, bottom: 40 }}>
-                  <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
-                  <XAxis
-                    dataKey="conversation_id"
-                    label={{ value: 'Conversation', position: 'insideBottom', offset: -5 }}
-                    tick={{ fontSize: '11px' }}
-                    interval={0}
-                    minTickGap={5}
-                  />
-                  <YAxis
-                    yAxisId="left"
-                    label={{ value: 'Duration (min)', angle: -90, position: 'insideLeft', offset: 10 }}
-                    tick={{ fontSize: '11px' }}
-                    allowDecimals={false}
-                  />
-                  <YAxis
-                    yAxisId="right"
-                    orientation="right"
-                    label={{ value: 'Messages', angle: 90, position: 'insideRight', offset: 10 }}
-                    tick={{ fontSize: '11px' }}
-                    allowDecimals={false}
-                  />
-                  <Tooltip formatter={(value, name) => [value.toLocaleString(), name === 'duration' ? 'Duration (min)' : 'Messages']} />
-                  <Legend />
-                  <Bar yAxisId="left" dataKey="duration" name="Duration (min)" fill="var(--primary)" radius={[4, 4, 0, 0]} />
-                  <Bar yAxisId="right" dataKey="message_count" name="Messages" fill="var(--chart-2)" radius={[4, 4, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          ) : (
-            <div className="h-[300px] w-full flex flex-col items-center justify-center text-center">
-              <LineChartIcon className="h-12 w-12 text-muted-foreground mb-4" />
-              <p className="text-lg text-muted-foreground">No conversation data to display.</p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-    )}
 
       {/* Word Usage and Emoji Usage Tabs */}
-      {(wordUsage && wordUsage.length > 0) || (emojiData && emojiData.emoji_usage && emojiData.emoji_usage.length > 0) && (
-        <div className="col-span-1 md:col-span-3">
-          <Tabs defaultValue={(wordUsage && wordUsage.length > 0) ? "wordUsage" : "emojiUsage"} className="w-full">
-            <TabsList className="grid w-full grid-cols-2 mb-4"><TabsTrigger value="wordUsage" disabled={!wordUsage || wordUsage.length === 0}>Word Usage</TabsTrigger><TabsTrigger value="emojiUsage" disabled={!emojiData || !emojiData.emoji_usage || emojiData.emoji_usage.length === 0}>Emoji Usage</TabsTrigger></TabsList>
-            {wordUsage && wordUsage.length > 0 && (
-              <TabsContent value="wordUsage">
-                <Card className="border-none shadow-none">
+      {((wordUsage && wordUsage.length > 0) || (emojiData && emojiData.emoji_usage && emojiData.emoji_usage.length > 0)) ? (
+        <Card className="col-span-1 md:col-span-3">
+          <CardHeader className="pb-0">
+            <Tabs defaultValue={(wordUsage && wordUsage.length > 0) ? "wordUsage" : "emojiUsage"} className="w-full">
+              <TabsList className="grid w-full grid-cols-2 mb-4">
+                <TabsTrigger value="wordUsage" disabled={!wordUsage || wordUsage.length === 0}>Word Usage</TabsTrigger>
+                <TabsTrigger value="emojiUsage" disabled={!emojiData || !emojiData.emoji_usage || emojiData.emoji_usage.length === 0}>Emoji Usage</TabsTrigger>
+              </TabsList>
+              {wordUsage && wordUsage.length > 0 && (
+                <TabsContent value="wordUsage">
                   <CardHeader className="pb-0"><ChartToolbar title="Most Frequent Words" data={wordUsageChartData} onRefresh={() => setRefreshKey(prev => prev + 1)} /></CardHeader>
                   <CardContent className="p-0 sm:p-6">
                     <div className="h-[300px] w-full">
                       <ResponsiveContainer width="100%" height="100%">
                         <BarChart data={wordUsageChartData} layout="vertical" margin={{ top: 5, right: 30, left: 70, bottom: 5 }}>
-                          <CartesianGrid strokeDasharray="3 3" opacity={0.2} /><XAxis type="number" allowDecimals={false} /><YAxis dataKey="word" type="category" width={80} />
-                          <Tooltip formatter={(value: number) => [value.toLocaleString(), "Frequency"]}/><Bar dataKey="count" fill="var(--primary)" radius={[0, 4, 4, 0]} barSize={20} />
+                          <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
+                          <XAxis type="number" allowDecimals={false} />
+                          <YAxis dataKey="word" type="category" width={80} />
+                          <Tooltip formatter={(value: number) => [value.toLocaleString(), "Frequency"]} />
+                          <Bar dataKey="count" fill="var(--primary)" radius={[0, 4, 4, 0]} barSize={20} />
                         </BarChart>
                       </ResponsiveContainer>
                     </div>
@@ -1244,12 +1147,10 @@ const handlePreviousUserFeaturePage = () => {
                       </div>
                     )}
                   </CardContent>
-                </Card>
-              </TabsContent>
-            )}
-            {emojiData && emojiData.emoji_usage && emojiData.emoji_usage.length > 0 && (
-              <TabsContent value="emojiUsage">
-                <Card className="border-none shadow-none">
+                </TabsContent>
+              )}
+              {emojiData && emojiData.emoji_usage && emojiData.emoji_usage.length > 0 && (
+                <TabsContent value="emojiUsage">
                   <CardHeader className="pb-0"><ChartToolbar title="Top 8 Emoji Usage" data={topEmojis} onRefresh={() => setRefreshKey(prev => prev + 1)} /></CardHeader>
                   <CardContent className="p-0 sm:p-6 flex items-center justify-center">
                     <div className="h-[300px] w-[300px]">
@@ -1258,16 +1159,121 @@ const handlePreviousUserFeaturePage = () => {
                           <Pie data={topEmojis} cx="50%" cy="50%" labelLine={false} outerRadius={100} innerRadius={60} dataKey="count" nameKey="emoji" paddingAngle={2}>
                             {topEmojis.map((entry, index) => (<Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />))}
                           </Pie>
-                          <Tooltip formatter={(value: number, name: string) => [value.toLocaleString(), name]} /><Legend iconSize={10} formatter={(value, entry: any) => <span style={{ color: entry.color }}>{value}</span>} />
+                          <Tooltip formatter={(value: number, name: string) => [value.toLocaleString(), name]} />
+                          <Legend iconSize={10} formatter={(value, entry: any) => <span style={{ color: entry.color }}>{value}</span>} />
                         </PieChart>
                       </ResponsiveContainer>
                     </div>
                   </CardContent>
-                </Card>
-              </TabsContent>
+                </TabsContent>
+              )}
+            </Tabs>
+          </CardHeader>
+        </Card>
+      ) : null}
+
+
+      {/* Hourly Activity Bar Chart */}
+      {timePatternsData && timePatternsData.hourly_activity && (
+        <Card className="col-span-1 md:col-span-2 lg:col-span-3">
+          <CardHeader className="pb-0"><ChartToolbar title="Hourly Activity (All Messages)" data={timePatternsData.hourly_activity} onRefresh={() => setRefreshKey(prev => prev + 1)} /></CardHeader>
+          <CardContent className="p-0 sm:p-6">
+            <div className="h-[300px] w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart
+                  data={timePatternsData.hourly_activity}
+                  margin={isMobile ? { top: 20, right: 10, bottom: 50, left: 5 } : { top: 20, right: 20, bottom: 20, left: 20 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
+                  <XAxis
+                    dataKey="hour"
+                    name="Hour of Day"
+                    tickFormatter={(hour) => { const h = parseInt(hour as string, 10); if (h === 0) return "12AM"; if (h === 12) return "12PM"; if (h < 12) return `${h}AM`; return `${h - 12}PM`; }}
+                    interval={isMobile ? 2 : 0}
+                    angle={isMobile ? -45 : 0}
+                    textAnchor={isMobile ? 'end' : 'middle'}
+                    height={isMobile ? 50 : 30}
+                    tick={{ fontSize: isMobile ? '10px' : '12px' }}
+                    minTickGap={isMobile ? 0 : 5}
+                  />
+                  <YAxis name="Messages" allowDecimals={false} tick={{ fontSize: isMobile ? '10px' : '12px' }} />
+                  <Tooltip labelFormatter={(label) => { const h = parseInt(label as string, 10); if (h === 0) return "12 AM"; if (h === 12) return "12 PM"; if (h < 12) return `${h} AM`; return `${h - 12} PM`; }}
+                    formatter={(value: number) => [value.toLocaleString(), "Messages"]} />
+                  <Legend wrapperStyle={{ fontSize: isMobile ? '11px' : '12px' }} />
+                  <Bar dataKey="message_count" name="Messages" fill="var(--primary)" radius={[4, 4, 0, 0]} barSize={isMobile ? 10 : undefined} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Render Average Conversation Stats Below Basic Statistics */}
+      {averageConversationStats && (
+        <Card className="col-span-1 md:col-span-3">
+          <CardHeader>
+            <ChartToolbar
+              title="Average Conversation Length"
+              description="Analysis of conversation durations and message counts."
+              data={conversationFlowData?.conversation_stats}
+              onRefresh={() => setRefreshKey(prev => prev + 1)}
+            />
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mt-2">
+              <div className="flex flex-col items-center sm:items-start">
+                <span className="text-2xl font-bold text-primary">{averageConversationStats.avgDurationMinutes.toFixed(1)} min</span>
+                <span className="text-xs text-muted-foreground">Avg. Conversation Duration</span>
+              </div>
+              <div className="flex flex-col items-center sm:items-start">
+                <span className="text-2xl font-bold text-primary">{averageConversationStats.avgMessages.toFixed(1)}</span>
+                <span className="text-xs text-muted-foreground">Avg. Messages per Conversation</span>
+              </div>
+              <div className="flex flex-col items-center sm:items-start">
+                <span className="text-2xl font-bold text-primary">{averageConversationStats.totalConversations.toLocaleString()}</span>
+                <span className="text-xs text-muted-foreground">Total Conversations</span>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="p-0 sm:p-6">
+            {conversationFlowData && conversationFlowData.conversation_stats.length > 0 ? (
+              <div className="h-[300px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={conversationFlowData.conversation_stats} margin={{ top: 10, right: 30, left: 10, bottom: 40 }}>
+                    <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
+                    <XAxis
+                      dataKey="conversation_id"
+                      label={{ value: 'Conversation', position: 'insideBottom', offset: -5 }}
+                      tick={{ fontSize: '11px' }}
+                      interval={0}
+                      minTickGap={5}
+                    />
+                    <YAxis
+                      yAxisId="left"
+                      label={{ value: 'Duration (min)', angle: -90, position: 'insideLeft', offset: 10 }}
+                      tick={{ fontSize: '11px' }}
+                      allowDecimals={false}
+                    />
+                    <YAxis
+                      yAxisId="right"
+                      orientation="right"
+                      label={{ value: 'Messages', angle: 90, position: 'insideRight', offset: 10 }}
+                      tick={{ fontSize: '11px' }}
+                      allowDecimals={false}
+                    />
+                    <Tooltip formatter={(value, name) => [value.toLocaleString(), name === 'duration' ? 'Duration (min)' : 'Messages']} />
+                    <Legend />
+                    <Bar yAxisId="left" dataKey="duration" name="Duration (min)" fill="var(--primary)" radius={[4, 4, 0, 0]} />
+                    <Bar yAxisId="right" dataKey="message_count" name="Messages" fill="var(--chart-2)" radius={[4, 4, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            ) : (
+              <div className="h-[300px] w-full flex flex-col items-center justify-center text-center">
+                <LineChartIcon className="h-12 w-12 text-muted-foreground mb-4" />
+                <p className="text-lg text-muted-foreground">No conversation data to display.</p>
+              </div>
             )}
-          </Tabs>
-        </div>
+          </CardContent>
+        </Card>
       )}
 
       {/* Average Reply Time Chart */}
@@ -1283,33 +1289,33 @@ const handlePreviousUserFeaturePage = () => {
           <CardContent className="p-0 sm:p-6">
             <div className="h-[350px] w-full">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart 
-                  data={visibleReplyTimeStats} 
-                  margin={isMobile ? { top: 5, right: 15, bottom: 85, left: visibleReplyTimeStats.length <=3 ? 40 : 15 } : { top: 5, right: 30, bottom: 70, left: 30 }}
+                <BarChart
+                  data={visibleReplyTimeStats}
+                  margin={isMobile ? { top: 5, right: 15, bottom: 85, left: visibleReplyTimeStats.length <= 3 ? 40 : 15 } : { top: 5, right: 30, bottom: 70, left: 30 }}
                 >
                   <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
-                  <XAxis 
-                    dataKey="user" 
-                    angle={isMobile ? -60 : -45} 
-                    textAnchor="end" 
-                    interval={0} 
-                    height={isMobile ? 90 : 80} 
-                    tickFormatter={(value) => (value as string).slice(0, isMobile? 10 : 12) + ((value as string).length > (isMobile? 10 : 12) ? '...' : '')}
+                  <XAxis
+                    dataKey="user"
+                    angle={isMobile ? -60 : -45}
+                    textAnchor="end"
+                    interval={0}
+                    height={isMobile ? 90 : 80}
+                    tickFormatter={(value) => (value as string).slice(0, isMobile ? 10 : 12) + ((value as string).length > (isMobile ? 10 : 12) ? '...' : '')}
                     tick={{ fontSize: isMobile ? '9px' : '11px' }}
                     minTickGap={isMobile ? -5 : 0}
                   />
-                  <YAxis 
-                    dataKey="average_reply_time_seconds" 
-                    allowDecimals={false} 
-                    label={{ value: "Avg. Reply Time", angle: -90, position: 'insideLeft', offset: isMobile ? -5 : -15, style: {fontSize: isMobile ? '0.7rem' : '0.8rem', fill: 'var(--primary)'} }} 
-                    tickFormatter={(value) => formatSecondsToTime(value as number)} 
-                    tickCount={isMobile ? 5 : 6} 
+                  <YAxis
+                    dataKey="average_reply_time_seconds"
+                    allowDecimals={false}
+                    label={{ value: "Avg. Reply Time", angle: -90, position: 'insideLeft', offset: isMobile ? -5 : -15, style: { fontSize: isMobile ? '0.7rem' : '0.8rem', fill: 'var(--primary)' } }}
+                    tickFormatter={(value) => formatSecondsToTime(value as number)}
+                    tickCount={isMobile ? 5 : 6}
                     width={isMobile ? 75 : 90}
                     tick={{ fontSize: isMobile ? '9px' : '10px' }}
                   />
-                  <Tooltip formatter={(value: number, name: string, props: any) => [formatSecondsToTime(value), `Avg. Reply Time (${props.payload.user})`]} labelFormatter={() => ``}/>
+                  <Tooltip formatter={(value: number, name: string, props: any) => [formatSecondsToTime(value), `Avg. Reply Time (${props.payload.user})`]} labelFormatter={() => ``} />
                   <Bar dataKey="average_reply_time_seconds" name="Average Reply Time" fill="var(--primary)" radius={[4, 4, 0, 0]}>
-                    <LabelList dataKey="average_reply_time_seconds" position="top" formatter={(value: number) => formatSecondsToTime(value)} fontSize={isMobile ? 9 : 10}/>
+                    <LabelList dataKey="average_reply_time_seconds" position="top" formatter={(value: number) => formatSecondsToTime(value)} fontSize={isMobile ? 9 : 10} />
                   </Bar>
                 </BarChart>
               </ResponsiveContainer>
@@ -1324,8 +1330,8 @@ const handlePreviousUserFeaturePage = () => {
           </CardContent>
         </Card>
       )}
-            {/* User Feature Usage Stacked Bar Chart */}
-            {userMessageTypeBreakdown && userMessageTypeBreakdown.length > 0 && (
+      {/* User Feature Usage Stacked Bar Chart */}
+      {userMessageTypeBreakdown && userMessageTypeBreakdown.length > 0 && (
         <Card className="col-span-1 md:col-span-2 lg:col-span-3">
           <CardHeader>
             <ChartToolbar
@@ -1361,8 +1367,8 @@ const handlePreviousUserFeaturePage = () => {
         </Card>
       )}
 
-         {/* Message Type Distribution */}
-         {messageTypeCounts && (
+      {/* Message Type Distribution */}
+      {messageTypeCounts && (
         <Card className="col-span-1 md:col-span-2 lg:col-span-3">
           <CardHeader>
             <ChartToolbar
@@ -1445,45 +1451,45 @@ const handlePreviousUserFeaturePage = () => {
                 return acc;
               }, {})
             ).sort((a, b) => b[1].length - a[1].length)
-            .map(([domain, links]: [string, Array<SharedLink>]) => (
-              <Collapsible key={domain}>
-                <CollapsibleTrigger asChild>
-                  <Button variant="ghost" className="w-full flex justify-between items-center text-left mb-1">
-                    <span className="font-semibold">{domain}</span>
-                    <span className="text-xs text-muted-foreground">{links.length} link{links.length > 1 ? 's' : ''}</span>
-                  </Button>
-                </CollapsibleTrigger>
-                <CollapsibleContent className="pl-2 border-l border-muted-foreground/20 mb-2">
-                  <ul className="space-y-1">
-                    {links.map((link, idx) => (
-                      <li key={link.url + link.timestamp + idx} className="flex flex-col">
-                        <a
-                          href={link.url.startsWith('http') ? link.url : 'https://' + link.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-primary underline break-all hover:text-primary/80"
-                        >
-                          {link.url}
-                        </a>
-                        <span className="text-xs text-muted-foreground">
-                          Shared by <span className="font-semibold">{link.user}</span>
-                          {link.timestamp && (
-                            <> on {new Date(link.timestamp).toLocaleString()}</>
+              .map(([domain, links]: [string, Array<SharedLink>]) => (
+                <Collapsible key={domain}>
+                  <CollapsibleTrigger asChild>
+                    <Button variant="ghost" className="w-full flex justify-between items-center text-left mb-1">
+                      <span className="font-semibold">{domain}</span>
+                      <span className="text-xs text-muted-foreground">{links.length} link{links.length > 1 ? 's' : ''}</span>
+                    </Button>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent className="pl-2 border-l border-muted-foreground/20 mb-2">
+                    <ul className="space-y-1">
+                      {links.map((link, idx) => (
+                        <li key={link.url + link.timestamp + idx} className="flex flex-col">
+                          <a
+                            href={link.url.startsWith('http') ? link.url : 'https://' + link.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-primary underline break-all hover:text-primary/80"
+                          >
+                            {link.url}
+                          </a>
+                          <span className="text-xs text-muted-foreground">
+                            Shared by <span className="font-semibold">{link.user}</span>
+                            {link.timestamp && (
+                              <> on {new Date(link.timestamp).toLocaleString()}</>
+                            )}
+                          </span>
+                          {link.message_text && (
+                            <span className="text-xs text-muted-foreground italic">"{link.message_text}"</span>
                           )}
-                        </span>
-                        {link.message_text && (
-                          <span className="text-xs text-muted-foreground italic">"{link.message_text}"</span>
-                        )}
-                      </li>
-                    ))}
-                  </ul>
-                </CollapsibleContent>
-              </Collapsible>
-            ))}
+                        </li>
+                      ))}
+                    </ul>
+                  </CollapsibleContent>
+                </Collapsible>
+              ))}
           </CardContent>
         </Card>
       )}
-      
+
       {/* Per-User Statistics Section */}
       {userActivity && userActivity.length > 0 && (
         <Card className="col-span-1 md:col-span-3">
@@ -1500,7 +1506,7 @@ const handlePreviousUserFeaturePage = () => {
                   <p>Media Shared: <span className="font-semibold">{stat.media_shared_count.toLocaleString()}</span></p>
                   <p>Voice Notes: <span className="font-semibold">{stat.voice_notes_sent?.toLocaleString() || '0'}</span></p>
                   {stat.longest_daily_streak && (
-                    <p>Longest Daily Streak: 
+                    <p>Longest Daily Streak:
                       <span className="font-semibold">
                         {stat.longest_daily_streak.length_days > 0 ? `${stat.longest_daily_streak.length_days} day${stat.longest_daily_streak.length_days === 1 ? '' : 's'}` : 'N/A'}
                       </span>
@@ -1518,7 +1524,7 @@ const handlePreviousUserFeaturePage = () => {
               </Card>))}
           </CardContent>
         </Card>)}
-      
+
       {/* User Sentiment Analysis Chart */}
       {userSentimentChartData.length > 0 && sentimentData && (
         <Card className="col-span-1 md:col-span-2">
@@ -1561,11 +1567,11 @@ const handlePreviousUserFeaturePage = () => {
           <CardHeader className="pb-0"><ChartToolbar title="Mood Shifts Over Time" data={moodShifts} onRefresh={() => setRefreshKey(prev => prev + 1)} /></CardHeader>
           <CardContent className="p-0 sm:p-6"><div className="h-[300px] w-full"><ResponsiveContainer width="100%" height="100%"><LineChart data={moodShifts} margin={{ top: 20, right: 20, bottom: 20, left: 20 }}><CartesianGrid strokeDasharray="3 3" opacity={0.2} /><XAxis dataKey="time" /><YAxis /><Tooltip /><Line type="monotone" dataKey="sentiment" stroke="var(--primary)" /></LineChart></ResponsiveContainer></div></CardContent>
         </Card>)}
-        
-   
 
 
-      
+
+
+
     </div>
   );
 }
