@@ -64,6 +64,9 @@ import type {
     EmojiData as EngineEmojiData, 
     TimePatternsData as EngineTimePatternsData,
     UserReplyTimeStat,
+    MessageTypeCounts, // <-- add` import
+    SharedLink,
+    UserMessageTypeBreakdown
 } from '@/lib/analysis-engine';
 import { cn } from '@/lib/utils';
 import { type ChartConfig } from "@/components/ui/chart";
@@ -141,6 +144,9 @@ interface DashboardChartsProps {
   conversationFlowData?: ConversationFlowData;
   timelineActivityData?: TimelineActivityData;
   userComparisonTimelineData?: UserComparisonTimelineData;
+  messageTypeCounts?: MessageTypeCounts;
+  sharedLinks?: { links: SharedLink[] };
+  userMessageTypeBreakdown?: any[];
 }
 
 const USERS_PER_PAGE = 10;
@@ -506,7 +512,7 @@ function UserComparisonTimelineCard({
       <CardContent className="p-0 sm:p-6">
         {hasActualPointsToPlot ? (
           <div className="h-[350px] w-full">
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="100%" height="100%"   >
               <AreaChart data={chartDisplayData} margin={{ top: 5, right: 20, bottom: (selectedUser1 && selectedUser2 && allUsers.length > 2) || (selectedUser1 && allUsers.length > 2 && timeGranularity !== 'yearly') ? 70 : 20, left: 5 }}>
                 <defs>
                   {selectedUser1 && (
@@ -581,6 +587,9 @@ export function DashboardCharts({
   conversationFlowData,
   timelineActivityData,
   userComparisonTimelineData,
+  messageTypeCounts,
+  sharedLinks,
+  userMessageTypeBreakdown,
 }: DashboardChartsProps) {
   
   const isMobile = useMediaQuery('(max-width: 768px)');
@@ -597,6 +606,8 @@ export function DashboardCharts({
   const [currentWordPage, setCurrentWordPage] = React.useState(0);
   const [currentTimelineWeeklyPage, setCurrentTimelineWeeklyPage] = React.useState(0);
   const [currentTimelineMonthlyPage, setCurrentTimelineMonthlyPage] = React.useState(0);
+  // Add state for User Feature Usage pagination
+  const [currentUserFeaturePage, setCurrentUserFeaturePage] = React.useState(0);
 
   // Derived data & console logs that depend on props
   const allUserNames = React.useMemo(() => {
@@ -684,6 +695,23 @@ export function DashboardCharts({
     }
   };
 
+
+     
+  {
+    console.log("sharedLinks",sharedLinks)
+  }
+    
+  {
+    console.log("userMessageTypeBreakdown",userMessageTypeBreakdown)
+    console.log("wordUsage",wordUsage)
+    console.log("emojiData",emojiData)
+  }
+
+
+
+    
+    
+
   
 
   const handlePreviousWords = () => {
@@ -726,6 +754,30 @@ export function DashboardCharts({
   const replyTimeChartConfig = {
     time: { label: "Avg. Reply Time (sec)", color: "hsl(var(--chart-3))" },
   } satisfies ChartConfig;
+
+
+
+// User Feature Usage pagination logic
+const totalUserFeaturePages = React.useMemo(() => {
+  if (!userMessageTypeBreakdown || userMessageTypeBreakdown.length === 0) return 0;
+  return Math.ceil(userMessageTypeBreakdown.length / USERS_PER_PAGE);
+}, [userMessageTypeBreakdown]);
+
+const visibleUserFeatureBreakdown = React.useMemo(() => {
+  if (!userMessageTypeBreakdown) return [];
+  const startIndex = currentUserFeaturePage * USERS_PER_PAGE;
+  const endIndex = startIndex + USERS_PER_PAGE;
+  return userMessageTypeBreakdown.slice(startIndex, endIndex);
+}, [userMessageTypeBreakdown, currentUserFeaturePage]);
+
+const handleNextUserFeaturePage = () => {
+  if (userMessageTypeBreakdown && (currentUserFeaturePage + 1) * USERS_PER_PAGE < userMessageTypeBreakdown.length) {
+    setCurrentUserFeaturePage(prevPage => prevPage + 1);
+  }
+};
+const handlePreviousUserFeaturePage = () => {
+  setCurrentUserFeaturePage(prevPage => Math.max(0, prevPage - 1));
+};
 
   // --- Message Activity Timeline: Pagination & Data Slicing --- 
   // Use the extended type for internal logic.
@@ -875,89 +927,8 @@ export function DashboardCharts({
         </Card>
       )}
 
-    
-
-
-       {/* Render Average Conversation Stats Below Basic Statistics */}
-    {averageConversationStats && (
-      <CardFooter className="pt-4 pb-3 text-sm border-t mt-2">
-        <div className="flex flex-col space-y-1">
-          <p>Total Conversations: <span className="font-semibold">{averageConversationStats.totalConversations.toLocaleString()}</span></p>
-          <p>Average Duration: <span className="font-semibold">{averageConversationStats.avgDurationMinutes.toFixed(1)} minutes</span></p>
-          <p>Average Messages per Conversation: <span className="font-semibold">{averageConversationStats.avgMessages.toFixed(1)}</span></p>
-        </div>
-      </CardFooter>
-    )}
-
-
-
-
-      {/* User Activity Section with Tabs */}
-      {userActivity && userActivity.length > 0 && sortedUserActivity.length > 0 && (
-        <Card className="col-span-1 md:col-span-3">
-          <Tabs defaultValue="donut" className="w-full">
-            <CardHeader className="px-2 sm:px-6 pt-2 sm:pt-4 pb-0">
-              <TabsList className="grid w-full grid-cols-2"><TabsTrigger value="donut">Activity Donut</TabsTrigger><TabsTrigger value="bar">Activity Bar Chart</TabsTrigger></TabsList>
-            </CardHeader>
-            <TabsContent value="donut">
-              <Card className="border-none shadow-none">
-                <CardHeader><ChartToolbar title="Top 8 User Activity (Messages)" data={sortedUserActivity.slice(0, 8)} onRefresh={() => setRefreshKey(prev => prev + 1)} /></CardHeader>
-                <CardContent className="p-0 sm:p-6 flex items-center justify-center">
-                  <div className="h-[350px] w-[350px]">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <PieChart>
-                        <Pie data={sortedUserActivity.slice(0, 8)} cx="50%" cy="50%" labelLine={false} outerRadius={120} innerRadius={70} dataKey="message_count" nameKey="user" paddingAngle={2}>
-                          {sortedUserActivity.slice(0, 8).map((entry, index) => (<Cell key={`cell-user-donut-${index}`} fill={COLORS[index % COLORS.length]} />))}
-                        </Pie>
-                        <Tooltip formatter={(value: number, name: string) => [value.toLocaleString(), `Messages by ${name}`]} />
-                        <Legend iconSize={10} formatter={(value) => { const userName = value as string; const userColor = COLORS[sortedUserActivity.findIndex(u => u.user === userName) % COLORS.length] || '#000'; return <span style={{ color: userColor }}>{userName.length > 20 ? userName.slice(0, 18) + '...' : userName}</span>; }} wrapperStyle={{fontSize: '12px'}}/>
-                      </PieChart>
-                    </ResponsiveContainer>
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-            <TabsContent value="bar">
-              <Card className="border-none shadow-none">
-                <CardHeader><ChartToolbar title="Messages per User (Bar)" data={visibleUserActivity} onRefresh={() => setRefreshKey(prev => prev + 1)} /></CardHeader>
-                <CardContent className="p-0 sm:p-6">
-                  <div className="h-[350px] w-full">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={visibleUserActivity} margin={{ top: 5, right: 20, bottom: 70, left: 5 }}>
-                        <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
-                        <XAxis dataKey="user" angle={-45} textAnchor="end" interval={0} height={80}/>
-                        <YAxis allowDecimals={false} />
-                        <Tooltip formatter={(value: number) => [value.toLocaleString(), "Messages"]} />
-                        <Bar dataKey="message_count" name="Messages" fill="var(--primary)" radius={[4, 4, 0, 0]}><LabelList dataKey="message_count" position="top" formatter={(value: number) => value.toLocaleString()} /></Bar>
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </div>
-                  {sortedUserActivity.length > USERS_PER_PAGE && (
-                    <div className="mt-4 flex justify-center items-center gap-2">
-                      <Button onClick={handlePreviousUsersPage} variant="outline" disabled={currentUserPage === 0}>Previous</Button>
-                      <span className="text-sm text-muted-foreground">Page {currentUserPage + 1} of {totalUserPages}</span>
-                      <Button onClick={handleNextUsersPage} variant="outline" disabled={(currentUserPage + 1) * USERS_PER_PAGE >= sortedUserActivity.length}>Next</Button>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </TabsContent>
-          </Tabs>
-        </Card>
-      )}
-
-      {/* UserComparisonTimelineCard */}
-      {allUserNames.length > 0 && (
-        <UserComparisonTimelineCard 
-          userComparisonTimelineData={userComparisonTimelineData} 
-          allUsers={allUserNames}
-          chartColors={COLORS} 
-        />
-      )}
-
-
-      {/* Message Activity Timeline Chart */}
-      {timelineActivityData && (
+            {/* Message Activity Timeline Chart */}
+            {timelineActivityData && (
         <Card className="col-span-1 md:col-span-3">
           <CardHeader>
             <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
@@ -1080,6 +1051,69 @@ export function DashboardCharts({
           </CardContent>
         </Card>
       )}
+
+            {/* User Activity Section with Tabs */}
+            {userActivity && userActivity.length > 0 && sortedUserActivity.length > 0 && (
+        <Card className="col-span-1 md:col-span-3">
+          <Tabs defaultValue="donut" className="w-full">
+            <CardHeader className="px-2 sm:px-6 pt-2 sm:pt-4 pb-0">
+              <TabsList className="grid w-full grid-cols-2"><TabsTrigger value="donut">Activity Donut</TabsTrigger><TabsTrigger value="bar">Activity Bar Chart</TabsTrigger></TabsList>
+            </CardHeader>
+            <TabsContent value="donut">
+              <Card className="border-none shadow-none">
+                <CardHeader><ChartToolbar title="Top 8 User Activity (Messages)" data={sortedUserActivity.slice(0, 8)} onRefresh={() => setRefreshKey(prev => prev + 1)} /></CardHeader>
+                <CardContent className="p-0 sm:p-6 flex items-center justify-center">
+                  <div className="h-[350px] w-[350px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie data={sortedUserActivity.slice(0, 8)} cx="50%" cy="50%" labelLine={false} outerRadius={120} innerRadius={70} dataKey="message_count" nameKey="user" paddingAngle={2}>
+                          {sortedUserActivity.slice(0, 8).map((entry, index) => (<Cell key={`cell-user-donut-${index}`} fill={COLORS[index % COLORS.length]} />))}
+                        </Pie>
+                        <Tooltip formatter={(value: number, name: string) => [value.toLocaleString(), `Messages by ${name}`]} />
+                        <Legend iconSize={10} formatter={(value) => { const userName = value as string; const userColor = COLORS[sortedUserActivity.findIndex(u => u.user === userName) % COLORS.length] || '#000'; return <span style={{ color: userColor }}>{userName.length > 20 ? userName.slice(0, 18) + '...' : userName}</span>; }} wrapperStyle={{fontSize: '12px'}}/>
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+            <TabsContent value="bar">
+              <Card className="border-none shadow-none">
+                <CardHeader><ChartToolbar title="Messages per User (Bar)" data={visibleUserActivity} onRefresh={() => setRefreshKey(prev => prev + 1)} /></CardHeader>
+                <CardContent className="p-0 sm:p-6">
+                  <div className="h-[350px] w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={visibleUserActivity} margin={{ top: 5, right: 20, bottom: 70, left: 5 }}>
+                        <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
+                        <XAxis dataKey="user" angle={-45} textAnchor="end" interval={0} height={80}/>
+                        <YAxis allowDecimals={false} />
+                        <Tooltip formatter={(value: number) => [value.toLocaleString(), "Messages"]} />
+                        <Bar dataKey="message_count" name="Messages" fill="var(--primary)" radius={[4, 4, 0, 0]}><LabelList dataKey="message_count" position="top" formatter={(value: number) => value.toLocaleString()} /></Bar>
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                  {sortedUserActivity.length > USERS_PER_PAGE && (
+                    <div className="mt-4 flex justify-center items-center gap-2">
+                      <Button onClick={handlePreviousUsersPage} variant="outline" disabled={currentUserPage === 0}>Previous</Button>
+                      <span className="text-sm text-muted-foreground">Page {currentUserPage + 1} of {totalUserPages}</span>
+                      <Button onClick={handleNextUsersPage} variant="outline" disabled={(currentUserPage + 1) * USERS_PER_PAGE >= sortedUserActivity.length}>Next</Button>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
+        </Card>
+      )}
+
+      {/* UserComparisonTimelineCard */}
+      {allUserNames.length > 0 && (
+        <UserComparisonTimelineCard 
+          userComparisonTimelineData={userComparisonTimelineData} 
+          allUsers={allUserNames}
+          chartColors={COLORS} 
+        />
+      )}
       
       {/* Hourly Activity Bar Chart */}
       {timePatternsData && timePatternsData.hourly_activity && (
@@ -1115,6 +1149,74 @@ export function DashboardCharts({
           </CardContent>
         </Card>
       )}
+
+    {/* Render Average Conversation Stats Below Basic Statistics */}
+    {averageConversationStats && (
+      <Card className="col-span-1 md:col-span-3">
+        <CardHeader>
+          <ChartToolbar
+            title="Average Conversation Length" 
+            description="Analysis of conversation durations and message counts."
+            data={conversationFlowData?.conversation_stats}
+            onRefresh={() => setRefreshKey(prev => prev + 1)}
+          />
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mt-2">
+            <div className="flex flex-col items-center sm:items-start">
+              <span className="text-2xl font-bold text-primary">{averageConversationStats.avgDurationMinutes.toFixed(1)} min</span>
+              <span className="text-xs text-muted-foreground">Avg. Conversation Duration</span>
+            </div>
+            <div className="flex flex-col items-center sm:items-start">
+              <span className="text-2xl font-bold text-primary">{averageConversationStats.avgMessages.toFixed(1)}</span>
+              <span className="text-xs text-muted-foreground">Avg. Messages per Conversation</span>
+            </div>
+            <div className="flex flex-col items-center sm:items-start">
+              <span className="text-2xl font-bold text-primary">{averageConversationStats.totalConversations.toLocaleString()}</span>
+              <span className="text-xs text-muted-foreground">Total Conversations</span>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="p-0 sm:p-6">
+          {conversationFlowData && conversationFlowData.conversation_stats.length > 0 ? (
+            <div className="h-[300px] w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={conversationFlowData.conversation_stats} margin={{ top: 10, right: 30, left: 10, bottom: 40 }}>
+                  <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
+                  <XAxis
+                    dataKey="conversation_id"
+                    label={{ value: 'Conversation', position: 'insideBottom', offset: -5 }}
+                    tick={{ fontSize: '11px' }}
+                    interval={0}
+                    minTickGap={5}
+                  />
+                  <YAxis
+                    yAxisId="left"
+                    label={{ value: 'Duration (min)', angle: -90, position: 'insideLeft', offset: 10 }}
+                    tick={{ fontSize: '11px' }}
+                    allowDecimals={false}
+                  />
+                  <YAxis
+                    yAxisId="right"
+                    orientation="right"
+                    label={{ value: 'Messages', angle: 90, position: 'insideRight', offset: 10 }}
+                    tick={{ fontSize: '11px' }}
+                    allowDecimals={false}
+                  />
+                  <Tooltip formatter={(value, name) => [value.toLocaleString(), name === 'duration' ? 'Duration (min)' : 'Messages']} />
+                  <Legend />
+                  <Bar yAxisId="left" dataKey="duration" name="Duration (min)" fill="var(--primary)" radius={[4, 4, 0, 0]} />
+                  <Bar yAxisId="right" dataKey="message_count" name="Messages" fill="var(--chart-2)" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          ) : (
+            <div className="h-[300px] w-full flex flex-col items-center justify-center text-center">
+              <LineChartIcon className="h-12 w-12 text-muted-foreground mb-4" />
+              <p className="text-lg text-muted-foreground">No conversation data to display.</p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    )}
 
       {/* Word Usage and Emoji Usage Tabs */}
       {(wordUsage && wordUsage.length > 0) || (emojiData && emojiData.emoji_usage && emojiData.emoji_usage.length > 0) && (
@@ -1222,6 +1324,165 @@ export function DashboardCharts({
           </CardContent>
         </Card>
       )}
+            {/* User Feature Usage Stacked Bar Chart */}
+            {userMessageTypeBreakdown && userMessageTypeBreakdown.length > 0 && (
+        <Card className="col-span-1 md:col-span-2 lg:col-span-3">
+          <CardHeader>
+            <ChartToolbar
+              title="User Feature Usage"
+              description="Messages, Stickers, Media, and Documents sent by each user."
+              data={userMessageTypeBreakdown}
+            />
+          </CardHeader>
+          <CardContent>
+            <div className="h-[350px] w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={visibleUserFeatureBreakdown} margin={{ top: 5, right: 20, bottom: 50, left: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
+                  <XAxis dataKey="user" angle={isMobile ? -30 : -20} textAnchor="end" interval={0} height={isMobile ? 80 : 60} tick={{ fontSize: isMobile ? '10px' : '12px' }} />
+                  <YAxis allowDecimals={false} />
+                  <Tooltip />
+                  <Legend />
+                  <Bar dataKey="messages" stackId="a" fill="#A3B18A" name="Messages" />
+                  <Bar dataKey="stickers" stackId="a" fill="#BC6C25" name="Stickers" />
+                  <Bar dataKey="media" stackId="a" fill="#468FAF" name="Media" />
+                  <Bar dataKey="documents" stackId="a" fill="#F4A259" name="Documents" />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+            {userMessageTypeBreakdown.length > USERS_PER_PAGE && (
+              <div className="mt-4 flex justify-center items-center gap-2">
+                <Button onClick={handlePreviousUserFeaturePage} variant="outline" size={isMobile ? 'sm' : 'default'} disabled={currentUserFeaturePage === 0}>Previous</Button>
+                <span className="text-sm text-muted-foreground">Page {currentUserFeaturePage + 1} of {totalUserFeaturePages}</span>
+                <Button onClick={handleNextUserFeaturePage} variant="outline" size={isMobile ? 'sm' : 'default'} disabled={(currentUserFeaturePage + 1) * USERS_PER_PAGE >= userMessageTypeBreakdown.length}>Next</Button>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+         {/* Message Type Distribution */}
+         {messageTypeCounts && (
+        <Card className="col-span-1 md:col-span-2 lg:col-span-3">
+          <CardHeader>
+            <ChartToolbar
+              title="Message Type Distribution"
+              description="Distribution of different message types (stickers, images, videos, documents, audio, and generic media) shared in the chat."
+              data={messageTypeCounts}
+              onRefresh={() => setRefreshKey(prev => prev + 1)}
+            />
+          </CardHeader>
+          <CardContent className="flex flex-col items-center justify-center">
+            <div className="h-[350px] w-full max-w-[400px]">
+              <ResponsiveContainer width="100%" height="100%" key={refreshKey}>
+                <PieChart>
+                  <Pie
+                    data={[
+                      { name: 'Sticker', value: messageTypeCounts.sticker },
+                      { name: 'Image', value: messageTypeCounts.image },
+                      { name: 'Video', value: messageTypeCounts.video },
+                      { name: 'Document', value: messageTypeCounts.document },
+                      { name: 'Audio', value: messageTypeCounts.audio },
+                      { name: 'Media', value: messageTypeCounts.media },
+                    ].filter(item => item.value > 0)}
+                    dataKey="value"
+                    nameKey="name"
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={70}
+                    outerRadius={120}
+                    paddingAngle={2}
+                  >
+                    {[
+                      messageTypeCounts.sticker,
+                      messageTypeCounts.image,
+                      messageTypeCounts.video,
+                      messageTypeCounts.document,
+                      messageTypeCounts.audio,
+                      messageTypeCounts.media,
+                    ].map((_, index) => (
+                      <Cell key={`cell-type-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip formatter={(value, name) => [`${value} messages`, name]} />
+                  <Legend iconSize={12} formatter={(value, entry) => {
+                    const color = COLORS[[
+                      'Sticker', 'Image', 'Video', 'Document', 'Audio', 'Media'
+                    ].indexOf(value) % COLORS.length];
+                    return <span style={{ color }}>{value}</span>;
+                  }} />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Deep Link Analysis (Shared Links) */}
+      {sharedLinks && sharedLinks.links.length > 0 && (
+        <Card className="col-span-1 md:col-span-3">
+          <CardHeader>
+            <ChartToolbar
+              title="Deep Link Analysis"
+              description="All links shared in the chat, grouped by domain. Click to preview."
+              data={sharedLinks}
+              onRefresh={() => setRefreshKey(prev => prev + 1)}
+            />
+          </CardHeader>
+          <CardContent>
+            {/* Group links by domain */}
+            {Object.entries(
+              sharedLinks.links.reduce<Record<string, Array<SharedLink>>>((acc: Record<string, Array<SharedLink>>, link: SharedLink) => {
+                try {
+                  const urlObj = new URL(link.url.startsWith('http') ? link.url : 'https://' + link.url);
+                  const domain = urlObj.hostname.replace(/^www\./, '');
+                  if (!acc[domain]) acc[domain] = [];
+                  acc[domain].push(link);
+                } catch {
+                  if (!acc['other']) acc['other'] = [];
+                  acc['other'].push(link);
+                }
+                return acc;
+              }, {})
+            ).sort((a, b) => b[1].length - a[1].length)
+            .map(([domain, links]: [string, Array<SharedLink>]) => (
+              <Collapsible key={domain}>
+                <CollapsibleTrigger asChild>
+                  <Button variant="ghost" className="w-full flex justify-between items-center text-left mb-1">
+                    <span className="font-semibold">{domain}</span>
+                    <span className="text-xs text-muted-foreground">{links.length} link{links.length > 1 ? 's' : ''}</span>
+                  </Button>
+                </CollapsibleTrigger>
+                <CollapsibleContent className="pl-2 border-l border-muted-foreground/20 mb-2">
+                  <ul className="space-y-1">
+                    {links.map((link, idx) => (
+                      <li key={link.url + link.timestamp + idx} className="flex flex-col">
+                        <a
+                          href={link.url.startsWith('http') ? link.url : 'https://' + link.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-primary underline break-all hover:text-primary/80"
+                        >
+                          {link.url}
+                        </a>
+                        <span className="text-xs text-muted-foreground">
+                          Shared by <span className="font-semibold">{link.user}</span>
+                          {link.timestamp && (
+                            <> on {new Date(link.timestamp).toLocaleString()}</>
+                          )}
+                        </span>
+                        {link.message_text && (
+                          <span className="text-xs text-muted-foreground italic">"{link.message_text}"</span>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                </CollapsibleContent>
+              </Collapsible>
+            ))}
+          </CardContent>
+        </Card>
+      )}
       
       {/* Per-User Statistics Section */}
       {userActivity && userActivity.length > 0 && (
@@ -1300,39 +1561,25 @@ export function DashboardCharts({
           <CardHeader className="pb-0"><ChartToolbar title="Mood Shifts Over Time" data={moodShifts} onRefresh={() => setRefreshKey(prev => prev + 1)} /></CardHeader>
           <CardContent className="p-0 sm:p-6"><div className="h-[300px] w-full"><ResponsiveContainer width="100%" height="100%"><LineChart data={moodShifts} margin={{ top: 20, right: 20, bottom: 20, left: 20 }}><CartesianGrid strokeDasharray="3 3" opacity={0.2} /><XAxis dataKey="time" /><YAxis /><Tooltip /><Line type="monotone" dataKey="sentiment" stroke="var(--primary)" /></LineChart></ResponsiveContainer></div></CardContent>
         </Card>)}
+        
+   
 
-      {conversationFlowData && conversationFlowData.conversation_stats && conversationFlowData.conversation_stats.length > 0 && (
-        <Card className="col-span-1 md:col-span-2 lg:col-span-3">
-          <CardHeader className="pb-0"><ChartToolbar title="Conversation Statistics" data={conversationFlowData.conversation_stats} onRefresh={() => setRefreshKey(prev => prev + 1)} /></CardHeader>
-          <CardContent className="p-0 sm:p-6">
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-border"><thead className="bg-muted/50"><tr><th className="px-4 py-2 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">ID</th><th className="px-4 py-2 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Start Time</th><th className="px-4 py-2 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">End Time</th><th className="px-4 py-2 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Duration (min)</th><th className="px-4 py-2 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Messages</th><th className="px-4 py-2 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Participants</th><th className="px-4 py-2 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Msg Density</th></tr></thead>
-                <tbody className="bg-background divide-y divide-border">
-                  {conversationFlowData.conversation_stats.map((stat) => (<tr key={stat.conversation_id}><td className="px-4 py-2 whitespace-nowrap text-sm">{stat.conversation_id}</td><td className="px-4 py-2 whitespace-nowrap text-sm">{new Date(stat.start_time).toLocaleString()}</td><td className="px-4 py-2 whitespace-nowrap text-sm">{new Date(stat.end_time).toLocaleString()}</td><td className="px-4 py-2 whitespace-nowrap text-sm">{stat.duration.toFixed(2)}</td><td className="px-4 py-2 whitespace-nowrap text-sm">{stat.message_count}</td><td className="px-4 py-2 whitespace-nowrap text-sm">{stat.participants}</td><td className="px-4 py-2 whitespace-nowrap text-sm">{stat.message_density.toFixed(2)}</td></tr>))}
-                </tbody>
-              </table>
-            </div>
-          </CardContent>
-          {averageConversationStats && (
-            <CardFooter className="pt-4 pb-3 text-sm border-t mt-2">
-              <div className="flex flex-col space-y-1">
-                <p>Total Conversations: <span className="font-semibold">{averageConversationStats.totalConversations.toLocaleString()}</span></p>
-                <p>Average Duration: <span className="font-semibold">{averageConversationStats.avgDurationMinutes.toFixed(1)} minutes</span></p>
-                <p>Average Messages per Conversation: <span className="font-semibold">{averageConversationStats.avgMessages.toFixed(1)}</span></p>
-              </div>
-            </CardFooter>
-          )}
-        </Card>)}
+
+      
     </div>
   );
 }
 
-// Helper function (add this within the file or import if it exists elsewhere)
-// This is a common way to get ISO week number. Add to utils if used in multiple places.
-function getISOWeek(date: Date): number {
-  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
-  const dayNum = d.getUTCDay() || 7;
-  d.setUTCDate(d.getUTCDate() + 4 - dayNum);
-  const yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1));
-  return Math.ceil((((d.getTime() - yearStart.getTime()) / 86400000) + 1)/7);
-}
+
+
+// // Helper function (add this within the file or import if it exists elsewhere)
+// // This is a common way to get ISO week number. Add to utils if used in multiple places.
+// function getISOWeek(date: Date): number {
+//   const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+//   const dayNum = d.getUTCDay() || 7;
+//   d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+//   const yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1));
+//   return Math.ceil((((d.getTime() - yearStart.getTime()) / 86400000) + 1)/7);
+// }
+
+

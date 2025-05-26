@@ -101,11 +101,34 @@ function determineFormatAndParseLine(line: string): {
     return null;
 }
 
+function isFirstLineGroupNotification(line: string): boolean {
+    // Checks if the line lacks a sender after the timestamp (structure-based)
+    // Android: 12/12/23, 1:23 pm - sender: message
+    // iOS: [12/12/23, 1:23:45 PM] sender: message
+    // System: no sender (no colon after timestamp)
+    const androidUserPattern = /^\d{1,2}\/\d{1,2}\/\d{2,4},\s*\d{1,2}:\d{2}(?::\d{2})?\s*(?:am|pm|AM|PM)?\s*-\s*[^:]+?:/;
+    const iosUserPattern = /^\[\d{1,2}\/\d{1,2}\/\d{2,4},\s*\d{1,2}:\d{2}(?::\d{2})?\s*(?:AM|PM)?\]\s*[^:]+?:/;
+    return !(androidUserPattern.test(line) || iosUserPattern.test(line));
+}
+
 function parseChatFile(rawData: string): DataFrameRow[] {
     const lines = rawData.split('\n');
     const dataFrame: DataFrameRow[] = [];
 
+    // Check only the first non-empty line for group notification
+    let firstNonEmptyLineIdx = -1;
     for (let i = 0; i < lines.length; i++) {
+        if (lines[i].trim() !== '') {
+            firstNonEmptyLineIdx = i;
+            break;
+        }
+    }
+    if (firstNonEmptyLineIdx !== -1 && isFirstLineGroupNotification(lines[firstNonEmptyLineIdx])) {
+        console.log('[parseChatFile] First message is a group notification:', lines[firstNonEmptyLineIdx]);
+        // You can flag or handle this as needed
+    }
+
+    for (let i = 0; i < lines.length; i++) {    
         const line = lines[i];
         if (line.trim() === '') continue;
         

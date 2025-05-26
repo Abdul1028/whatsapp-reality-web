@@ -80,15 +80,47 @@ export function calculateBasicStats(data: DataFrameRow[]): BasicStats {
     }
   });
 
+  const encryptionNotificationMessage = "Messages and calls are end-to-end encrypted. Only people in this chat can read, listen to, or share them.";
+  let firstActualMessageIndex = 0;
+  while (
+    firstActualMessageIndex < data.length &&
+    data[firstActualMessageIndex].message === encryptionNotificationMessage
+  ) {
+    firstActualMessageIndex++;
+  }
+
+  const firstMessageEntry = firstActualMessageIndex < data.length ? data[firstActualMessageIndex] : data[0];
+  // If all messages were the notification, firstMessageEntry will be data[0] (or data[data.length] if handled differently, but data[0] is safer if loop finishes)
+  // However, if firstActualMessageIndex >= data.length, it means all messages were notifications, or data was empty (already handled)
+  // A more robust way for empty or all-notification case:
+
+  let f_message_date: string | null = null;
+  let f_message_text: string | null = null;
+  let f_message_sender: string | null = null;
+
+  if (firstActualMessageIndex < data.length) {
+    // We found an actual first message
+    f_message_date = new Date(data[firstActualMessageIndex].date).toISOString();
+    f_message_text = data[firstActualMessageIndex].message;
+    f_message_sender = data[firstActualMessageIndex].user;
+  } else if (data.length > 0) {
+    // All messages were notifications, or some other edge case. Fallback to the very first message.
+    // Or, if desired, set to null if all were notifications. For now, let's use the original first one.
+    // This case might indicate an issue if ONLY notifications exist, but the current structure implies data[0] exists.
+    f_message_date = new Date(data[0].date).toISOString();
+    f_message_text = data[0].message;
+    f_message_sender = data[0].user;
+  }
+
   return {
     total_messages: data.length,
     total_words: totalWords,
     total_users: uniqueUserSet.size,
-    first_message_date: new Date(data[0].date).toISOString(),
+    first_message_date: f_message_date,
     last_message_date: new Date(data[data.length - 1].date).toISOString(),
-    first_message_text: data[0].message,
+    first_message_text: f_message_text,
     last_message_text: data[data.length - 1].message,
-    first_message_sender: data[0].user,
+    first_message_sender: f_message_sender,
     last_message_sender: data[data.length - 1].user,
     total_links: totalLinks,
     total_media_omitted: totalMediaOmitted,
@@ -655,3 +687,235 @@ export function calculateUserActivityTimeline(data: DataFrameRow[]): UserCompari
 }
 
 // END: New User Activity Timeline Analysis for Comparison Chart
+
+export interface MessageTypeCounts {
+  sticker: number;
+  image: number;
+  video: number;
+  document: number;
+  audio: number;
+  media: number; // generic media omitted
+}
+
+/**
+ * Counts the number of each message type (sticker, image, video, document, audio, media) in the chat data.
+ * @param data DataFrameRow[]
+ * @returns MessageTypeCounts
+ */
+export function calculateMessageTypeCounts(data: DataFrameRow[]): MessageTypeCounts {
+  const counts: MessageTypeCounts = {
+    sticker: 0,
+    image: 0,
+    video: 0,
+    document: 0,
+    audio: 0,
+    media: 0,
+  };
+
+  if (!data || data.length === 0) return counts;
+
+  data.forEach(row => {
+    const msg = row.message.toLowerCase();
+    if (msg.includes('sticker omitted')) counts.sticker++;
+    if (msg.includes('image omitted')) counts.image++;
+    if (msg.includes('video omitted')) counts.video++;
+    if (msg.includes('document omitted')) counts.document++;
+    if (msg.includes('audio omitted')) counts.audio++;
+    // Count generic <Media omitted> (not image/video/sticker/document/audio)
+    if (msg.includes('<media omitted>')) counts.media++;
+  });
+
+  return counts;
+}
+
+// --- Shared Links Extraction ---
+export interface SharedLink {
+  url: string;
+  user: string;
+  timestamp: string; // ISO string
+  message_text?: string;
+}
+
+export interface SharedLinksData {
+  links: SharedLink[];
+}
+
+/**
+ * Extracts all shared links from the chat data.
+ * @param data DataFrameRow[]
+ * @returns SharedLinksData
+ */
+export function extractSharedLinks(data: DataFrameRow[]): SharedLinksData {
+  const links: SharedLink[] = [];
+  if (!data || data.length === 0) return { links };
+
+  data.forEach(row => {
+    const foundLinks = row.message.match(LINK_REGEX);
+    if (foundLinks) {
+      foundLinks.forEach(url => {
+        links.push({
+          url,
+          user: row.user,
+          timestamp: new Date(row.date).toISOString(),
+          message_text: row.message,
+        });
+      });
+    }
+  });
+  console.log("links found from server:", links)
+  return { links };
+}
+
+// Add ConversationStat and ConversationFlowData interfaces if not present
+export interface ConversationStat {
+  conversation_id: number;
+  start_time: string;
+  end_time: string;
+  duration: number;
+  message_count: number;
+  participants: number;
+  message_density: number;
+  // Helper property for internal use only
+  last_sender?: string;
+}
+
+export interface UserCount {
+  user: string;
+  count: number;
+}
+
+export interface ConversationFlowData {
+  total_conversations: number;
+  conversation_stats: ConversationStat[];
+  conversation_starters: UserCount[];
+  conversation_enders: UserCount[];
+}
+
+// Conversation Flow Analysis
+export function calculateConversationFlow(data: DataFrameRow[], gapMinutes: number = 60): ConversationFlowData {
+  if (!data || data.length === 0) {
+    return {
+      total_conversations: 0,
+      conversation_stats: [],
+      conversation_starters: [],
+      conversation_enders: [],
+    };
+  }
+
+  // Sort data by date ascending
+  const sorted = [...data].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+  const conversations: ConversationStat[] = [];
+  let currentConv: ConversationStat | null = null;
+  let lastMsgTime: Date | null = null;
+  let lastConvId = 0;
+  let participantsSet = new Set<string>();
+  let starters: Record<string, number> = {};
+  let enders: Record<string, number> = {};
+
+  for (let i = 0; i < sorted.length; i++) {
+    const row = sorted[i];
+    if (row.user === 'group_notification') continue;
+    const msgTime = new Date(row.date);
+    if (!lastMsgTime || ((msgTime.getTime() - lastMsgTime.getTime()) / 60000 > gapMinutes)) {
+      // New conversation
+      if (currentConv) {
+        currentConv.end_time = lastMsgTime!.toISOString();
+        currentConv.duration = (new Date(currentConv.end_time).getTime() - new Date(currentConv.start_time).getTime()) / 60000;
+        currentConv.participants = participantsSet.size;
+        currentConv.message_density = currentConv.message_count / (currentConv.duration || 1);
+        conversations.push(currentConv);
+        // Mark ender
+        if (currentConv.message_count > 0) {
+          const lastUser = row.user;
+          enders[currentConv.last_sender!] = (enders[currentConv.last_sender!] || 0) + 1;
+        }
+      }
+      // Start new conversation
+      lastConvId++;
+      currentConv = {
+        conversation_id: lastConvId,
+        start_time: msgTime.toISOString(),
+        end_time: msgTime.toISOString(),
+        duration: 0,
+        message_count: 1,
+        participants: 1,
+        message_density: 0,
+        last_sender: row.user,
+      } as any;
+      participantsSet = new Set([row.user]);
+      // Mark starter
+      starters[row.user] = (starters[row.user] || 0) + 1;
+    } else {
+      // Continue current conversation
+      if (currentConv) {
+        currentConv.message_count++;
+        participantsSet.add(row.user);
+        currentConv.last_sender = row.user;
+      }
+    }
+    lastMsgTime = msgTime;
+  }
+  // Push last conversation
+  if (currentConv && currentConv.message_count > 0) {
+    currentConv.end_time = lastMsgTime!.toISOString();
+    currentConv.duration = (new Date(currentConv.end_time).getTime() - new Date(currentConv.start_time).getTime()) / 60000;
+    currentConv.participants = participantsSet.size;
+    currentConv.message_density = currentConv.message_count / (currentConv.duration || 1);
+    conversations.push(currentConv);
+    enders[currentConv.last_sender!] = (enders[currentConv.last_sender!] || 0) + 1;
+  }
+
+  // Remove helper property
+  conversations.forEach(conv => { delete (conv as any).last_sender; });
+
+  // Prepare starters and enders arrays
+  const conversation_starters = Object.entries(starters).map(([user, count]) => ({ user, count }));
+  const conversation_enders = Object.entries(enders).map(([user, count]) => ({ user, count }));
+
+  return {
+    total_conversations: conversations.length,
+    conversation_stats: conversations,
+    conversation_starters,
+    conversation_enders,
+  };
+}
+
+// Add after UserStat and related interfaces
+export interface UserMessageTypeBreakdown {
+  user: string;
+  messages: number;
+  stickers: number;
+  media: number;
+  documents: number;
+}
+
+// Add after other calculate* functions
+export function calculateUserMessageTypeBreakdown(data: DataFrameRow[]): UserMessageTypeBreakdown[] {
+  const userMap = new Map<string, UserMessageTypeBreakdown>();
+
+  data.forEach(row => {
+    if (row.user === 'group_notification') return;
+    let userStats = userMap.get(row.user);
+    if (!userStats) {
+      userStats = { user: row.user, messages: 0, stickers: 0, media: 0, documents: 0 };
+      userMap.set(row.user, userStats);
+    }
+    const msg = row.message.toLowerCase();
+    if (msg.includes('sticker omitted')) {
+      userStats.stickers++;
+    } else if (
+      msg.includes('image omitted') ||
+      msg.includes('video omitted') ||
+      msg.includes('audio omitted') ||
+      msg.includes('<media omitted>')
+    ) {
+      userStats.media++;
+    } else if (msg.includes('document omitted')) {
+      userStats.documents++;
+    } else {
+      userStats.messages++;
+    }
+  });
+
+  return Array.from(userMap.values());
+}

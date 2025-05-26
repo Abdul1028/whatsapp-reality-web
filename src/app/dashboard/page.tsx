@@ -20,7 +20,9 @@ import type {
     HourlyActivityPoint as EngineHourlyActivityPoint,
     DailyActivityPoint as EngineDailyActivityPoint,
     MonthlyActivityPoint as EngineMonthlyActivityPoint,
-    UserReplyTimeStat
+    UserReplyTimeStat,
+    MessageTypeCounts,
+    SharedLinksData
 } from '@/lib/analysis-engine';
 import type { DataFrameRow } from '@/components/upload-form';
 
@@ -135,6 +137,9 @@ interface AnalysisResults {
   messageLength: any[]; 
   moodShifts: any[];    
   userComparisonTimelineData?: analysisEngine.UserComparisonTimelineData;
+  messageTypeCounts?: MessageTypeCounts;
+  sharedLinks?: SharedLinksData;
+  userMessageTypeBreakdown?: MessageTypeCounts;
 }
 
 // Default initial values for robust loading
@@ -170,6 +175,15 @@ const initialTimelineData: TimelineData = { monthly: [], daily: [] };
 const initialTimelineActivityData: TimelineActivityData = { daily: [], monthly: [], yearly: [] , weekly: []};
 const initialReplyTimeStats: UserReplyTimeStat[] = []; // Initial state for reply time stats
 const initialUserComparisonTimelineData: analysisEngine.UserComparisonTimelineData = { weekly: [], monthly: [], yearly: [] };
+const initialAnalysisMessageTypeCounts: MessageTypeCounts = {
+  sticker: 0,
+  image: 0,
+  video: 0,
+  document: 0,
+  audio: 0,
+  media: 0,
+};
+const initialAnalysisSharedLinks: SharedLinksData = { links: [] };
 export default function DashboardPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -180,6 +194,7 @@ export default function DashboardPage() {
   const [error, setError] = useState<string | null>(null);
   const [isRawDataVisible, setIsRawDataVisible] = useState(false);
   const [stopWordsList, setStopWordsList] = useState<Set<string>>(new Set());
+  const [messageTypeCounts, setMessageTypeCounts] = useState<MessageTypeCounts>(initialAnalysisMessageTypeCounts);
 
   useEffect(() => {
     // Fetch stop words
@@ -232,6 +247,9 @@ export default function DashboardPage() {
                     responseTimes: parsedLegacy.responseTimes || [],
                     messageLength: parsedLegacy.messageLength || [],
                     moodShifts: parsedLegacy.moodShifts || [],
+                    messageTypeCounts: parsedLegacy.messageTypeCounts || initialAnalysisMessageTypeCounts,
+                    sharedLinks: parsedLegacy.sharedLinks || initialAnalysisSharedLinks,
+                    userMessageTypeBreakdown: parsedLegacy.userMessageTypeBreakdown || initialAnalysisMessageTypeCounts,
                 });
             } catch (e) {
                 setError("Failed to parse stored analysis data.");
@@ -277,6 +295,10 @@ export default function DashboardPage() {
         const calculatedTimePatterns: EngineTimePatternsData = analysisEngine.calculateTimePatterns(fetchedData);
         const calculatedReplyTimes: UserReplyTimeStat[] = analysisEngine.calculateReplyTimes(fetchedData); // Calculate reply times
         const userComparisonTimeline = analysisEngine.calculateUserActivityTimeline(fetchedData); // <--- ADD THIS CALL
+        const calculatedMessageTypeCounts: MessageTypeCounts = analysisEngine.calculateMessageTypeCounts(fetchedData);
+        const calculatedSharedLinks = analysisEngine.extractSharedLinks(fetchedData);
+        const calculatedConversationFlow = analysisEngine.calculateConversationFlow(fetchedData);
+        const calculatedUserMessageTypeBreakdown = analysisEngine.calculateUserMessageTypeBreakdown(fetchedData);
 
         let finalBasicStats: BasicStatsData = {
             total_messages: calculatedBasicStats.total_messages,
@@ -336,6 +358,7 @@ export default function DashboardPage() {
             }
         }
         
+        setMessageTypeCounts(calculatedMessageTypeCounts);
         setAnalysisResults({
             basicStats: finalBasicStats,
             userActivity: finalUserActivity,
@@ -346,12 +369,15 @@ export default function DashboardPage() {
             emoji: finalEmoji,
             timePatterns: finalTimePatterns, // Newly calculated time patterns
             replyTimeStats: finalReplyTimeStats, // Pass replyTimeStats to results
-            conversationFlow: finalConversationFlow,
+            conversationFlow: calculatedConversationFlow,
             conversationPatterns: finalConvPatterns,
             responseTimes: finalResponseTimes,
             messageLength: finalMsgLength,
             moodShifts: finalMoodShifts,
             userComparisonTimelineData: finalUserComparisonTimeline, // <--- USE THE CALCULATED DATA HERE
+            messageTypeCounts: calculatedMessageTypeCounts,
+            sharedLinks: calculatedSharedLinks, // <-- CORRECT TYPE
+            userMessageTypeBreakdown: calculatedUserMessageTypeBreakdown,
         });
         toast.success("Analysis data loaded.", { id: "dashboard-loading" });
 
@@ -381,6 +407,9 @@ export default function DashboardPage() {
                     responseTimes: parsedLegacy.responseTimes || [],
                     messageLength: parsedLegacy.messageLength || [],
                     moodShifts: parsedLegacy.moodShifts || [],
+                    messageTypeCounts: parsedLegacy.messageTypeCounts || initialAnalysisMessageTypeCounts,
+                    sharedLinks: parsedLegacy.sharedLinks || initialAnalysisSharedLinks, // <-- FIXED
+                    userMessageTypeBreakdown: parsedLegacy.userMessageTypeBreakdown || initialAnalysisMessageTypeCounts,
                 });
             } catch (e) { /* Do nothing if legacy parsing also fails */ }
         }
@@ -458,6 +487,9 @@ export default function DashboardPage() {
           responseTimes={analysisResults.responseTimes}
           replyTimeStats={analysisResults.replyTimeStats}
           userComparisonTimelineData={analysisResults.userComparisonTimelineData}
+          messageTypeCounts={analysisResults.messageTypeCounts || messageTypeCounts}
+          sharedLinks={analysisResults.sharedLinks}
+          userMessageTypeBreakdown={analysisResults.userMessageTypeBreakdown}
         />
       </Suspense>
 
