@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState, Suspense } from 'react';
+import React, { useEffect, useState, Suspense, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { DashboardCharts } from '@/app/dashboard/components/dashboard-charts';
 import { RawDataTable } from '@/app/dashboard/components/raw-data-table';
@@ -197,6 +197,7 @@ export default function DashboardPage() {
   const [stopWordsList, setStopWordsList] = useState<Set<string>>(new Set());
   const [messageTypeCounts, setMessageTypeCounts] = useState<MessageTypeCounts>(initialAnalysisMessageTypeCounts);
   const [showFeatureInfo, setShowFeatureInfo] = useState(false);
+  const chatPerspectiveRef = useRef<HTMLDivElement>(null);
 
 
 
@@ -471,13 +472,38 @@ export default function DashboardPage() {
       <p className="text-muted-foreground mb-6">Results for: <span className='text-primary font-semibold'>{chatFileName}</span></p>
       {error && <p className="text-destructive text-center mb-4">Note: There was an issue loading some parts of the data: {error}</p>} 
 
-      {/* Basic Stats Section (already present) */}
-      {/* ...your BasicStatsCard or similar here... */}
 
+      <Suspense fallback={
+        <div className="flex items-center justify-center min-h-[300px]">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <p className="ml-2">Loading charts...</p>
+        </div>
+      }>
+        <DashboardCharts
+          basicStats={analysisResults.basicStats}
+          userActivity={analysisResults.userActivity?.user_activity}
+          sentimentData={analysisResults.sentiment}
+          emojiData={analysisResults.emoji}
+          wordUsage={analysisResults.wordUsage?.word_counts}
+          timePatternsData={analysisResults.timePatterns}
+          conversationFlowData={analysisResults.conversationFlow}
+          timelineActivityData={analysisResults.timelineActivity}
+          messageLength={analysisResults.messageLength}
+          moodShifts={analysisResults.moodShifts}
+          conversationPatterns={analysisResults.conversationPatterns}
+          responseTimes={analysisResults.responseTimes}
+          replyTimeStats={analysisResults.replyTimeStats}
+          userComparisonTimelineData={analysisResults.userComparisonTimelineData}
+          messageTypeCounts={analysisResults.messageTypeCounts || messageTypeCounts}
+          sharedLinks={analysisResults.sharedLinks}
+          userMessageTypeBreakdown={analysisResults.userMessageTypeBreakdown}
+          onGoToChatPerspective={() => chatPerspectiveRef.current?.scrollIntoView({ behavior: 'smooth' })}
+        />
+      </Suspense>
 
-      {/* Chat Conversation Explorer Section */}
-      {rawDataFrame.length > 0 && Array.from(new Set(rawDataFrame.map(m => m.user))).length > 1 && (
-        <div className="my-6">
+            {/* Chat Conversation Explorer Section */}
+            {rawDataFrame.length > 0 && Array.from(new Set(rawDataFrame.map(m => m.user))).length > 1 && (
+        <div ref={chatPerspectiveRef} className="my-6">
           <div className="flex items-center gap-2 mb-2">
             <h2 className="text-lg font-bold">View Chats in WhatsApp Web Format</h2>
             <Button
@@ -506,32 +532,6 @@ export default function DashboardPage() {
         </div>
       )}
 
-      <Suspense fallback={
-        <div className="flex items-center justify-center min-h-[300px]">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          <p className="ml-2">Loading charts...</p>
-        </div>
-      }>
-        <DashboardCharts
-          basicStats={analysisResults.basicStats}
-          userActivity={analysisResults.userActivity?.user_activity}
-          sentimentData={analysisResults.sentiment}
-          emojiData={analysisResults.emoji}
-          wordUsage={analysisResults.wordUsage?.word_counts}
-          timePatternsData={analysisResults.timePatterns}
-          conversationFlowData={analysisResults.conversationFlow}
-          timelineActivityData={analysisResults.timelineActivity}
-          messageLength={analysisResults.messageLength}
-          moodShifts={analysisResults.moodShifts}
-          conversationPatterns={analysisResults.conversationPatterns}
-          responseTimes={analysisResults.responseTimes}
-          replyTimeStats={analysisResults.replyTimeStats}
-          userComparisonTimelineData={analysisResults.userComparisonTimelineData}
-          messageTypeCounts={analysisResults.messageTypeCounts || messageTypeCounts}
-          sharedLinks={analysisResults.sharedLinks}
-          userMessageTypeBreakdown={analysisResults.userMessageTypeBreakdown}
-        />
-      </Suspense>
 
       {/* Raw Data Table Section (Collapsible) */}
       {rawDataFrame.length > 0 && (

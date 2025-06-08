@@ -251,6 +251,32 @@ export function UploadForm() {
             ref={fileInputRef}
           />
         </div>
+        {/* Demo Button */}
+        {!selectedFile && (
+          <Button
+            variant="secondary"
+            className="w-full mt-2"
+            onClick={async () => {
+              setIsLoading(true);
+              try {
+                const res = await fetch('/sample-file/sample.txt');
+                if (!res.ok) throw new Error('Failed to load sample file');
+                const text = await res.text();
+                // Create a File object (simulate user upload)
+                const demoFile = new File([text], 'sample.txt', { type: 'text/plain' });
+                processFile(demoFile);
+              } catch (e) {
+                toast.error('Could not load demo file', { description: e instanceof Error ? e.message : String(e) });
+              } finally {
+                setIsLoading(false);
+              }
+            }}
+            disabled={isLoading}
+          >
+            {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FileText className="mr-2 h-4 w-4" />}
+            Try Demo with Sample File
+          </Button>
+        )}
         {selectedFile && (
            <div className="text-xs text-muted-foreground flex justify-end items-center">
              <span>Not the right file?</span> 

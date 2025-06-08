@@ -73,6 +73,7 @@ import { type ChartConfig } from "@/components/ui/chart";
 import useMediaQuery from "@/hooks/useMediaQuery";
 import { hasViewportRelativeCoordinates } from "@dnd-kit/utilities"
 import { createServerParamsForServerSegment } from "next/dist/server/app-render/entry-base"
+import ChatPerspectiveView from './ChatPerspectiveView';
 
 // Color array for charts
 const COLORS = [
@@ -147,6 +148,7 @@ interface DashboardChartsProps {
   messageTypeCounts?: MessageTypeCounts;
   sharedLinks?: { links: SharedLink[] };
   userMessageTypeBreakdown?: any[];
+  onGoToChatPerspective?: () => void;
 }
 
 const USERS_PER_PAGE = 10;
@@ -496,7 +498,7 @@ function UserComparisonTimelineCard({
               Previous Months
             </Button>
             <span className="text-sm text-muted-foreground">
-              Page {currentMonthlyPage + 1} of {totalMonthlyPages}
+              {currentMonthlyPage + 1} of {totalMonthlyPages}
             </span>
             <Button
               variant="outline"
@@ -590,6 +592,7 @@ export function DashboardCharts({
   messageTypeCounts,
   sharedLinks,
   userMessageTypeBreakdown,
+  onGoToChatPerspective,
 }: DashboardChartsProps) {
 
   const isMobile = useMediaQuery('(max-width: 768px)');
@@ -608,6 +611,7 @@ export function DashboardCharts({
   const [currentTimelineMonthlyPage, setCurrentTimelineMonthlyPage] = React.useState(0);
   // Add state for User Feature Usage pagination
   const [currentUserFeaturePage, setCurrentUserFeaturePage] = React.useState(0);
+  const [showFeatureInfo, setShowFeatureInfo] = React.useState(false);
 
   // Derived data & console logs that depend on props
   const allUserNames = React.useMemo(() => {
@@ -924,10 +928,21 @@ export function DashboardCharts({
               )}
             </CardFooter>
           )}
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-2 mt-2 bg-muted/30 rounded-md p-2">
+            <span className="text-primary font-medium text-sm text-center sm:text-left">
+              You can also view your messages in WhatsApp Web format with different perspectives!
+            </span>
+            <Button
+              variant="secondary"
+              size="sm"
+              className="ml-0 sm:ml-3 mt-2 sm:mt-0"
+              onClick={onGoToChatPerspective}
+            > 
+              Go to Chat Explorer
+            </Button>
+          </div>
         </Card>
       )}
-
-      
 
       {/* Message Activity Timeline Chart */}
       {timelineActivityData && (
@@ -947,7 +962,7 @@ export function DashboardCharts({
             {timelineGranularityReact === "weekly" && totalTimelineWeeklyPages > 1 && (
               <div className="mt-3 flex items-center justify-center gap-2">
                 <Button variant="outline" size="sm" onClick={() => setCurrentTimelineWeeklyPage(prev => Math.max(0, prev - 1))} disabled={currentTimelineWeeklyPage === 0}>Previous Weeks</Button>
-                <span className="text-sm text-muted-foreground">Page {currentTimelineWeeklyPage + 1} of {totalTimelineWeeklyPages}</span>
+                <span className="text-sm text-muted-foreground">{currentTimelineWeeklyPage + 1} of {totalTimelineWeeklyPages}</span>
                 <Button variant="outline" size="sm" onClick={() => setCurrentTimelineWeeklyPage(prev => Math.min(totalTimelineWeeklyPages - 1, prev + 1))} disabled={currentTimelineWeeklyPage >= totalTimelineWeeklyPages - 1}>Next Weeks</Button>
               </div>
 
@@ -957,7 +972,7 @@ export function DashboardCharts({
             {timelineGranularityReact === "monthly" && totalTimelineMonthlyPages > 1 && (
               <div className="mt-3 flex items-center justify-center gap-2">
                 <Button variant="outline" size="sm" onClick={() => setCurrentTimelineMonthlyPage(prev => Math.max(0, prev - 1))} disabled={currentTimelineMonthlyPage === 0}>Previous Months</Button>
-                <span className="text-sm text-muted-foreground">Page {currentTimelineMonthlyPage + 1} of {totalTimelineMonthlyPages}</span>
+                <span className="text-sm text-muted-foreground">{currentTimelineMonthlyPage + 1} of {totalTimelineMonthlyPages}</span>
                 <Button variant="outline" size="sm" onClick={() => setCurrentTimelineMonthlyPage(prev => Math.min(totalTimelineMonthlyPages - 1, prev + 1))} disabled={currentTimelineMonthlyPage >= totalTimelineMonthlyPages - 1}>Next Months</Button>
               </div>
             )}
@@ -1097,7 +1112,7 @@ export function DashboardCharts({
                   {sortedUserActivity.length > USERS_PER_PAGE && (
                     <div className="mt-4 flex justify-center items-center gap-2">
                       <Button onClick={handlePreviousUsersPage} variant="outline" disabled={currentUserPage === 0}>Previous</Button>
-                      <span className="text-sm text-muted-foreground">Page {currentUserPage + 1} of {totalUserPages}</span>
+                      <span className="text-sm text-muted-foreground">{currentUserPage + 1} of {totalUserPages}</span>
                       <Button onClick={handleNextUsersPage} variant="outline" disabled={(currentUserPage + 1) * USERS_PER_PAGE >= sortedUserActivity.length}>Next</Button>
                     </div>
                   )}
@@ -1144,7 +1159,7 @@ export function DashboardCharts({
                     {wordUsage.length > WORDS_PER_PAGE && (
                       <div className="mt-4 flex justify-center items-center gap-2">
                         <Button onClick={handlePreviousWords} variant="outline" disabled={currentWordPage === 0}>Previous</Button>
-                        <span className="text-sm text-muted-foreground">Page {currentWordPage + 1} of {Math.ceil(wordUsage.length / WORDS_PER_PAGE)}</span>
+                        <span className="text-sm text-muted-foreground">{currentWordPage + 1} of {Math.ceil(wordUsage.length / WORDS_PER_PAGE)}</span>
                         <Button onClick={handleNextWords} variant="outline" disabled={(currentWordPage + 1) * WORDS_PER_PAGE >= wordUsage.length}>Next</Button>
                       </div>
                     )}
@@ -1325,7 +1340,7 @@ export function DashboardCharts({
             {replyTimeStats.length > USERS_PER_PAGE && (
               <div className="mt-4 flex justify-center items-center gap-2">
                 <Button onClick={handlePreviousReplyPage} variant="outline" disabled={currentReplyPage === 0}>Previous</Button>
-                <span className="text-sm text-muted-foreground">Page {currentReplyPage + 1} of {totalReplyPages}</span>
+                <span className="text-sm text-muted-foreground">{currentReplyPage + 1} of {totalReplyPages}</span>
                 <Button onClick={handleNextReplyPage} variant="outline" disabled={(currentReplyPage + 1) * USERS_PER_PAGE >= replyTimeStats.length}>Next</Button>
               </div>
             )}
@@ -1361,7 +1376,7 @@ export function DashboardCharts({
             {userMessageTypeBreakdown.length > USERS_PER_PAGE && (
               <div className="mt-4 flex justify-center items-center gap-2">
                 <Button onClick={handlePreviousUserFeaturePage} variant="outline" size={isMobile ? 'sm' : 'default'} disabled={currentUserFeaturePage === 0}>Previous</Button>
-                <span className="text-sm text-muted-foreground">Page {currentUserFeaturePage + 1} of {totalUserFeaturePages}</span>
+                <span className="text-sm text-muted-foreground">{currentUserFeaturePage + 1} of {totalUserFeaturePages}</span>
                 <Button onClick={handleNextUserFeaturePage} variant="outline" size={isMobile ? 'sm' : 'default'} disabled={(currentUserFeaturePage + 1) * USERS_PER_PAGE >= userMessageTypeBreakdown.length}>Next</Button>
               </div>
             )}
