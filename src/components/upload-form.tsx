@@ -197,7 +197,6 @@ export function UploadForm() {
     // setIsLoading(false); // isLoading should be set to false after navigation or in case of error
                          // router.push will unmount this component, so setting isLoading might not be strictly necessary if navigation is successful
   };
-
   return (
     <Card 
       className={cn(
