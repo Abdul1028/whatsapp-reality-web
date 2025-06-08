@@ -25,6 +25,7 @@ import type {
     SharedLinksData
 } from '@/lib/analysis-engine';
 import type { DataFrameRow } from '@/components/upload-form';
+import ChatPerspectiveView from './components/ChatPerspectiveView';
 
 // Interfaces for the data structures
 // Updated BasicStatsData to match what analysis-engine provides and upload-form stores
@@ -195,6 +196,7 @@ export default function DashboardPage() {
   const [isRawDataVisible, setIsRawDataVisible] = useState(false);
   const [stopWordsList, setStopWordsList] = useState<Set<string>>(new Set());
   const [messageTypeCounts, setMessageTypeCounts] = useState<MessageTypeCounts>(initialAnalysisMessageTypeCounts);
+  const [showFeatureInfo, setShowFeatureInfo] = useState(false);
 
 
 
@@ -468,6 +470,41 @@ export default function DashboardPage() {
       <h1 className="text-3xl font-bold mb-2">Chat Analysis Dashboard</h1>
       <p className="text-muted-foreground mb-6">Results for: <span className='text-primary font-semibold'>{chatFileName}</span></p>
       {error && <p className="text-destructive text-center mb-4">Note: There was an issue loading some parts of the data: {error}</p>} 
+
+      {/* Basic Stats Section (already present) */}
+      {/* ...your BasicStatsCard or similar here... */}
+
+
+      {/* Chat Conversation Explorer Section */}
+      {rawDataFrame.length > 0 && Array.from(new Set(rawDataFrame.map(m => m.user))).length > 1 && (
+        <div className="my-6">
+          <div className="flex items-center gap-2 mb-2">
+            <h2 className="text-lg font-bold">View Chats in WhatsApp Web Format</h2>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowFeatureInfo(v => !v)}
+              aria-expanded={showFeatureInfo}
+              className="ml-2"
+            >
+              What does this do?
+            </Button>
+          </div>
+          {showFeatureInfo && (
+            <div className="bg-muted/40 rounded p-3 text-sm mb-2">
+              <ul className="list-disc pl-5">
+                <li><b>Show participants:</b> Select one or more users to filter the chat to just their messages.</li>
+                <li><b>View with perspective of:</b> See the chat as if you were any participant—your messages appear on the right, others on the left, just like WhatsApp Web.</li>
+                <li><b>WhatsApp Web format:</b> Messages are displayed in a familiar, chat-like style for easy reading and context.</li>
+              </ul>
+            </div>
+          )}
+          <ChatPerspectiveView 
+            messages={rawDataFrame}
+            users={Array.from(new Set(rawDataFrame.filter(m => m.user !== 'group_notification').map(m => m.user)))}
+          />
+        </div>
+      )}
 
       <Suspense fallback={
         <div className="flex items-center justify-center min-h-[300px]">

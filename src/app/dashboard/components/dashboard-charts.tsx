@@ -927,6 +927,8 @@ export function DashboardCharts({
         </Card>
       )}
 
+      
+
       {/* Message Activity Timeline Chart */}
       {timelineActivityData && (
         <Card className="col-span-1 md:col-span-3">
