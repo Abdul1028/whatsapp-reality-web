@@ -397,6 +397,7 @@ export default function DashboardPage() {
             sharedLinks: calculatedSharedLinks,
             userMessageTypeBreakdown: calculatedUserMessageTypeBreakdown,
         });
+        setError(null);
         toast.success("Analysis data loaded.", { id: "dashboard-loading" });
 
       } catch (err) {
@@ -536,7 +537,7 @@ export default function DashboardPage() {
       </div>
       <h1 className="text-3xl font-bold mb-2">Chat Analysis Dashboard</h1>
       <p className="text-muted-foreground mb-6">Results for: <span className='text-primary font-semibold'>{chatFileName}</span></p>
-      {error && <p className="text-destructive text-center mb-4">Note: There was an issue loading some parts of the data: {error}</p>} 
+      {/* Only show error if no analysisResults; error is cleared on successful load */}
 
 
       <Suspense fallback={

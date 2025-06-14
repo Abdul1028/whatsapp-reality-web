@@ -79,11 +79,11 @@ export function UploadForm() {
     }
     // File size warnings and limits
     if (file.size > 5 * 1024 * 1024) {
-      toast.warning("Large files may cause issues on mobile devices. For best results, use smaller exports.");
+      toast.warning("Large files may cause issues on mobile devices please do the analyis on a desktop. For best results, use smaller exports");
     }
     if (file.size > 20 * 1024 * 1024) {
       toast.error("File too large. Please upload a file smaller than 20MB.");
-      setSelectedFile(null);
+      setSelectedFile(null);  
       if (fileInputRef.current) {
         fileInputRef.current.value = "";
       }
