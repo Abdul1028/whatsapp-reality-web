@@ -493,7 +493,7 @@ export default function DashboardPage() {
     );
   }
 
-  if (error && !analysisResults) {
+  if (!isLoading && error && !analysisResults) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen">
         <p className="text-lg mb-2 text-destructive">Error: {error}</p>
@@ -508,7 +508,7 @@ export default function DashboardPage() {
     );
   }
   
-  if (!analysisResults) {
+  if (!isLoading && !analysisResults) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen">
         <p className="text-lg mb-4">No analysis data found for "{chatFileName}". This could be due to missing ID or data.</p>
@@ -547,23 +547,23 @@ export default function DashboardPage() {
         </div>
       }>
         <DashboardCharts
-          basicStats={analysisResults.basicStats}
-          userActivity={analysisResults.userActivity?.user_activity}
-          sentimentData={analysisResults.sentiment}
-          emojiData={analysisResults.emoji}
-          wordUsage={analysisResults.wordUsage?.word_counts}
-          timePatternsData={analysisResults.timePatterns}
-          conversationFlowData={analysisResults.conversationFlow}
-          timelineActivityData={analysisResults.timelineActivity}
-          messageLength={analysisResults.messageLength}
-          moodShifts={analysisResults.moodShifts}
-          conversationPatterns={analysisResults.conversationPatterns}
-          responseTimes={analysisResults.responseTimes}
-          replyTimeStats={analysisResults.replyTimeStats}
-          userComparisonTimelineData={analysisResults.userComparisonTimelineData}
-          messageTypeCounts={analysisResults.messageTypeCounts || messageTypeCounts}
-          sharedLinks={analysisResults.sharedLinks}
-          userMessageTypeBreakdown={analysisResults.userMessageTypeBreakdown}
+          basicStats={analysisResults!.basicStats}
+          userActivity={analysisResults!.userActivity?.user_activity}
+          sentimentData={analysisResults!.sentiment}
+          emojiData={analysisResults!.emoji}
+          wordUsage={analysisResults!.wordUsage?.word_counts}
+          timePatternsData={analysisResults!.timePatterns}
+          conversationFlowData={analysisResults!.conversationFlow}
+          timelineActivityData={analysisResults!.timelineActivity}
+          messageLength={analysisResults!.messageLength}
+          moodShifts={analysisResults!.moodShifts}
+          conversationPatterns={analysisResults!.conversationPatterns}
+          responseTimes={analysisResults!.responseTimes}
+          replyTimeStats={analysisResults!.replyTimeStats}
+          userComparisonTimelineData={analysisResults!.userComparisonTimelineData}
+          messageTypeCounts={analysisResults!.messageTypeCounts || messageTypeCounts}
+          sharedLinks={analysisResults!.sharedLinks}
+          userMessageTypeBreakdown={analysisResults!.userMessageTypeBreakdown}
           onGoToChatPerspective={() => chatPerspectiveRef.current?.scrollIntoView({ behavior: 'smooth' })}
         />
       </Suspense>
