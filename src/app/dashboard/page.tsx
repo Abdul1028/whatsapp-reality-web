@@ -247,7 +247,7 @@ export default function DashboardPage() {
 
     async function fetchDataAndProcess() {
       if (!dataId) {
-        toast.error("Large file detected. Please wait while we process your analysis.");
+        toast.warning("Large file detected. Please wait while we process your analysis.");
         const legacyStoredResults = localStorage.getItem("whatsappAnalysisResults");
         if (legacyStoredResults) {
             try {
@@ -411,7 +411,7 @@ export default function DashboardPage() {
         const errorMessage = err instanceof Error ? err.message : "An unknown error occurred.";
         console.error("[DashboardPage] Error fetching or processing data:", err);
         setError(errorMessage);
-        toast.error("Large file detected. Please wait while we process your analysis.");
+        toast.warning("Large file detected. Please wait while we process your analysis.");
         // If fetching/processing main data fails, try to load any legacy data
         const legacyStoredResults = localStorage.getItem("whatsappAnalysisResults");
          if (legacyStoredResults) {
@@ -500,6 +500,9 @@ export default function DashboardPage() {
     );
   }
 
+
+  //This is the error message specifically for mobile devices and large files (loads mostly on mobile as it is a browser limitation (slow))
+
   if (!isLoading && error && !analysisResults) {
     // Check for mobile and large file
     const chatFileSize = localStorage.getItem('chatMessageCount');
@@ -529,13 +532,37 @@ export default function DashboardPage() {
 
     
   }
+
+
+  //for both mobile and desktop but mostly mobile will only show this message
+  //This is the loading message for large files (loads mostly on mobile as it is a browser limitation (slow))
   
   if (!isLoading && !analysisResults) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen">
-       <p className="text-lg mb-4">
-  Large file detected. Please wait while we process your analysis. For better performance, consider uploading a smaller file on mobile, or switch to a desktop for handling larger files.
-</p>
+      <div className="flex flex-col items-center justify-center min-h-screen bg-background text-center px-4">
+        <div className="bg-card border border-muted rounded-xl shadow-lg p-6 max-w-md w-full flex flex-col items-center">
+          <Loader2 className="h-10 w-10 animate-spin text-orange-500 mb-4" />
+          <h2 className="text-xl font-bold text-orange-600 mb-2">Processing a Large File...</h2>
+          <p className="text-base text-foreground mb-3">
+            Your chat is being analyzed right now. This may take a little longer on mobile devices due to browser memory limits.<br /><br />
+            <span className="font-semibold">Please keep this page open and don't close your browser.</span>
+          </p>
+          <div className="w-full flex flex-col items-center mb-2">
+            <div className="w-2/3 h-2 bg-orange-100 rounded-full overflow-hidden mb-2">
+              <div className="h-full bg-orange-400 animate-pulse" style={{ width: '80%' }}></div>
+            </div>
+            <span className="text-xs text-muted-foreground">Almost there...</span>
+          </div>
+          <p className="text-sm text-muted-foreground mb-2">
+            <b>Tip:</b> For faster results, try uploading a smaller chat export, or use a desktop or laptop for large files.
+          </p>
+          <button
+            onClick={() => router.push('/')}
+            className="mt-2 px-4 py-2 bg-primary text-primary-foreground rounded hover:bg-primary/90"
+          >
+            Upload a new chat file
+          </button>
+        </div>
       </div>
     );
   }
