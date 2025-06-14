@@ -77,6 +77,18 @@ export function UploadForm() {
       }
       return;
     }
+    // File size warnings and limits
+    if (file.size > 5 * 1024 * 1024) {
+      toast.warning("Large files may cause issues on mobile devices. For best results, use smaller exports.");
+    }
+    if (file.size > 20 * 1024 * 1024) {
+      toast.error("File too large. Please upload a file smaller than 20MB.");
+      setSelectedFile(null);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+      return;
+    }
     setSelectedFile(file);
     console.log("Selected file:", file.name);
   }, []);
@@ -134,6 +146,16 @@ export function UploadForm() {
 
     try {
       const fileContent = await selectedFile.text();
+      // Quick message count check before upload
+      const messageCount = (fileContent.match(/\n/g) || []).length;
+      if (messageCount > 10000) {
+        toast.warning("Large files may cause issues on mobile devices. For best results, use smaller exports.");
+      }
+      if (messageCount > 50000) {
+        toast.error("File contains too many messages. Please upload a file with fewer than 50,000 messages.");
+        setIsLoading(false);
+        return;
+      }
       const response = await fetch('/api/process-chat', {
         method: 'POST',
         headers: { 'Content-Type': 'text/plain' },

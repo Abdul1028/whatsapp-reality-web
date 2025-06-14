@@ -26,6 +26,7 @@ import type {
 } from '@/lib/analysis-engine';
 import type { DataFrameRow } from '@/components/upload-form';
 import ChatPerspectiveView from './components/ChatPerspectiveView';
+import { saveAs } from 'file-saver';
 
 // Interfaces for the data structures
 // Updated BasicStatsData to match what analysis-engine provides and upload-form stores
@@ -226,6 +227,14 @@ export default function DashboardPage() {
 
   useEffect(() => {
     const dataId = searchParams.get('id');
+    // Fallback: If no id in URL, try to get from localStorage (mobile fix)
+    if (!dataId) {
+      const lastId = typeof window !== 'undefined' ? localStorage.getItem('lastAnalysisId') : null;
+      if (lastId) {
+        router.replace(`/dashboard?id=${lastId}`);
+        return;
+      }
+    }
     const fileNameFromStorage = localStorage.getItem("whatsappChatFileName");
     if (fileNameFromStorage) setChatFileName(fileNameFromStorage);
 
@@ -287,7 +296,10 @@ export default function DashboardPage() {
         if (!fetchedData || fetchedData.length === 0) {
           throw new Error("No data received from the server or data is empty.");
         }
-        
+        // Store the current id as lastAnalysisId for mobile reload fallback
+        if (typeof window !== 'undefined' && dataId) {
+          localStorage.setItem('lastAnalysisId', dataId);
+        }
         setRawDataFrame(fetchedData);
         console.log(`[DashboardPage] Fetched ${fetchedData.length} rows for dataId: ${dataId}`);
 
@@ -428,6 +440,49 @@ export default function DashboardPage() {
 
   }, [searchParams, stopWordsList, router]);
 
+  // Export analysis handler
+  const handleExport = () => {
+    if (!analysisResults || !rawDataFrame) return;
+    const exportData = {
+      analysisResults,
+      rawDataFrame,
+      chatFileName,
+      exportedAt: new Date().toISOString(),
+      version: 1,
+    };
+    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+    const fileName = `whatsapp-analysis-${chatFileName.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_\-]/g, '')}-${new Date().toISOString().slice(0,10)}.json`;
+    saveAs(blob, fileName);
+    toast.success('Analysis exported!');
+  };
+
+  // Import analysis handler
+  const handleImport = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const json = JSON.parse(e.target?.result as string);
+        if (!json.analysisResults || !json.rawDataFrame) {
+          toast.error('Invalid analysis file.');
+          return;
+        }
+        setAnalysisResults(json.analysisResults);
+        setRawDataFrame(json.rawDataFrame);
+        setChatFileName(json.chatFileName || 'imported chat');
+        setError(null);
+        setIsLoading(false);
+        toast.success('Analysis imported!');
+      } catch (err) {
+        toast.error('Failed to import analysis file.');
+      }
+    };
+    reader.readAsText(file);
+    // Reset input value so the same file can be imported again if needed
+    event.target.value = '';
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -468,6 +523,17 @@ export default function DashboardPage() {
 
   return (
     <div className="container mx-auto p-4 md:p-6 lg:p-8">
+      <div className="flex flex-wrap gap-2 mb-4 items-center">
+        <Button onClick={handleExport} disabled={!analysisResults} variant="outline">
+          Export Analysis
+        </Button>
+        <label className="inline-block">
+          <input type="file" accept="application/json" onChange={handleImport} className="hidden" />
+          <Button asChild variant="outline">
+            <span>Import Analysis</span>
+          </Button>
+        </label>
+      </div>
       <h1 className="text-3xl font-bold mb-2">Chat Analysis Dashboard</h1>
       <p className="text-muted-foreground mb-6">Results for: <span className='text-primary font-semibold'>{chatFileName}</span></p>
       {error && <p className="text-destructive text-center mb-4">Note: There was an issue loading some parts of the data: {error}</p>} 
