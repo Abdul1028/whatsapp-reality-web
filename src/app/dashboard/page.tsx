@@ -526,20 +526,6 @@ export default function DashboardPage() {
       );
     }  
   }
-  
-  if (!isLoading) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-screen">
-        <p className="text-lg mb-4">No analysis data found for "{chatFileName}". This could be due to missing ID or data.</p>
-        <button
-          onClick={() => router.push('/')}
-          className="px-4 py-2 bg-primary text-primary-foreground rounded hover:bg-primary/90"
-        >
-          Upload a new chat file
-        </button>
-      </div>
-    );
-  }
 
   return (
     <div className="container mx-auto p-4 md:p-6 lg:p-8">
