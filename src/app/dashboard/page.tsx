@@ -524,7 +524,24 @@ export default function DashboardPage() {
           </button>
         </div>
       );
-    }  
+    }
+  
+
+    
+  }
+  
+  if (!isLoading && !analysisResults) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen">
+        <p className="text-lg mb-4">Large file detected, please wait your analysis is loading....upload a smaller file for mobile or use desktop for larger files</p>
+        <button
+          onClick={() => router.push('/')}
+          className="px-4 py-2 bg-primary text-primary-foreground rounded hover:bg-primary/90"
+        >
+          Upload a new chat file
+        </button>
+      </div>
+    );
   }
 
   return (
