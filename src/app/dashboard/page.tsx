@@ -504,7 +504,7 @@ export default function DashboardPage() {
     // Check for mobile and large file
     const chatFileSize = localStorage.getItem('chatMessageCount');
     const isMobile = isMobileDevice();
-    const isLargeFile = chatFileSize && parseInt(chatFileSize) > 1000; // You can adjust this threshold
+    const isLargeFile = chatFileSize && parseInt(chatFileSize) > 10000; // You can adjust this threshold
     if (isMobile && isLargeFile) {
       return (
         <div className="flex flex-col items-center justify-center min-h-screen text-center">
