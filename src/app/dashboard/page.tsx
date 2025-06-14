@@ -527,7 +527,7 @@ export default function DashboardPage() {
     }  
   }
   
-  if (!isLoading && !analysisResults) {
+  if (!isLoading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen">
         <p className="text-lg mb-4">No analysis data found for "{chatFileName}". This could be due to missing ID or data.</p>
