@@ -186,6 +186,13 @@ const initialAnalysisMessageTypeCounts: MessageTypeCounts = {
   media: 0,
 };
 const initialAnalysisSharedLinks: SharedLinksData = { links: [] };
+
+// Utility to detect mobile devices
+function isMobileDevice() {
+  if (typeof navigator === 'undefined') return false;
+  return /Mobi|Android|iPhone|iPad|iPod|Opera Mini|IEMobile|WPDesktop/i.test(navigator.userAgent);
+}
+
 export default function DashboardPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -494,6 +501,31 @@ export default function DashboardPage() {
   }
 
   if (!isLoading && error && !analysisResults) {
+    // Check for mobile and large file
+    const chatFileSize = localStorage.getItem('chatMessageCount');
+    const isMobile = isMobileDevice();
+    const isLargeFile = chatFileSize && parseInt(chatFileSize) > 1000; // You can adjust this threshold
+    if (isMobile && isLargeFile) {
+      return (
+        <div className="flex flex-col items-center justify-center min-h-screen text-center">
+          <p className="text-lg mb-2 text-destructive font-bold">This file is too large to process on your mobile device.</p>
+          <p className="text-sm text-muted-foreground mb-4 max-w-md">
+            For privacy, all analysis is done in your browser, but mobile browsers have strict memory limits and may fail with large files.<br /><br />
+            <b>What can you do?</b><br />
+            • Try again on a desktop or laptop computer.<br />
+            • Use a smaller chat export.<br /><br />
+            <span className="text-xs text-muted-foreground">(Technical note: This is not a bug—it's a limitation of mobile browsers when processing large files entirely in-browser.)</span>
+          </p>
+          <button
+            onClick={() => router.push('/')}
+            className="px-4 py-2 bg-primary text-primary-foreground rounded hover:bg-primary/90"
+          >
+            Upload a new chat file
+          </button>
+        </div>
+      );
+    }
+    // Default error for other cases
     return (
       <div className="flex flex-col items-center justify-center min-h-screen">
         <p className="text-lg mb-2 text-destructive">Error: {error}</p>
