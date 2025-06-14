@@ -411,7 +411,7 @@ export default function DashboardPage() {
         const errorMessage = err instanceof Error ? err.message : "An unknown error occurred.";
         console.error("[DashboardPage] Error fetching or processing data:", err);
         setError(errorMessage);
-        toast.error("Failed to load dashboard data", { id: "dashboard-loading", description: errorMessage });
+        toast.error("Large file detected. Please wait while we process your analysis.");
         // If fetching/processing main data fails, try to load any legacy data
         const legacyStoredResults = localStorage.getItem("whatsappAnalysisResults");
          if (legacyStoredResults) {
