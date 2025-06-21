@@ -55,43 +55,58 @@ export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
-}>) 
-{
+}>) {
   const cookieStore = await cookies()
 
   const activeThemeValue = cookieStore.get("active_theme")?.value
-const isScaled = activeThemeValue?.endsWith("-scaled")
+  const isScaled = activeThemeValue?.endsWith("-scaled")
 
-  
+
   return (
     <ClerkProvider>
       <html lang="en" suppressHydrationWarning  >
         <head>
-        <link rel="icon" type="image/png" href="logo.png"></link>
+          <link rel="icon" type="image/png" href="logo.png"></link>
+
+          <meta name="description" content="Visualize your WhatsApp messages like never before." />
+
+          <meta property="og:url" content="https://wareality.tech" />
+          <meta property="og:type" content="website" />
+          <meta property="og:title" content="WhatsApp Reality" />
+          <meta property="og:description" content="Visualize your WhatsApp messages like never before." />
+          <meta property="og:image" content="https://www.wareality.tech/og-image.png" />
+
+          <meta name="twitter:card" content="summary_large_image" />
+          <meta property="twitter:domain" content="wareality.tech" />
+          <meta property="twitter:url" content="https://wareality.tech" />
+          <meta name="twitter:title" content="WhatsApp Reality" />
+          <meta name="twitter:description" content="Visualize your WhatsApp messages like never before." />
+          <meta name="twitter:image" content="https://www.wareality.tech/og-image.png" />
+
         </head>
         <body
-     className={cn(
-      "bg-background overscroll-none font-sans antialiased",
-      activeThemeValue ? `theme-${activeThemeValue}` : "",
-      isScaled ? "theme-scaled" : "",
-      `${nunito.variable} ${ptSans.variable}`,
-    )}
-      >
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem  
-          disableTransitionOnChange
-          enableColorScheme
+          className={cn(
+            "bg-background overscroll-none font-sans antialiased",
+            activeThemeValue ? `theme-${activeThemeValue}` : "",
+            isScaled ? "theme-scaled" : "",
+            `${nunito.variable} ${ptSans.variable}`,
+          )}
         >
-        <ActiveThemeProvider initialTheme={activeThemeValue}>
-          <div className="texture" />
-            {children}
-            <Toaster richColors closeButton />
-        </ActiveThemeProvider>
-        </ThemeProvider>
-      </body>
-    </html>
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="system"
+            enableSystem
+            disableTransitionOnChange
+            enableColorScheme
+          >
+            <ActiveThemeProvider initialTheme={activeThemeValue}>
+              <div className="texture" />
+              {children}
+              <Toaster richColors closeButton />
+            </ActiveThemeProvider>
+          </ThemeProvider>
+        </body>
+      </html>
     </ClerkProvider>
   );
 }
