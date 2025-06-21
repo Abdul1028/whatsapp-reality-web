@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils"
 import { ThemeProvider } from "next-themes";
 import { Toaster } from "@/components/ui/sonner";
 import { ClerkProvider } from '@clerk/nextjs'
+import { Analytics } from '@vercel/analytics/next';
 
 const nunito = Nunito({
   variable: "--font-nunito",
@@ -117,6 +118,7 @@ export default async function RootLayout({
               <Toaster richColors closeButton />
             </ActiveThemeProvider>
           </ThemeProvider>
+          <Analytics />
         </body>
       </html>
     </ClerkProvider>
