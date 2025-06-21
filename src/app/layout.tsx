@@ -67,6 +67,7 @@ export default async function RootLayout({
     <ClerkProvider>
       <html lang="en" suppressHydrationWarning  >
         <head>
+        <link rel="icon" href="/favicon.ico" sizes="any" />
           <link
             rel="icon"
             href="/icon?<generated>"
