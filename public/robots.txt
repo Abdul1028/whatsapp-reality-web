@@ -1,0 +1,9 @@
+# *
+User-agent: *
+Allow: /
+
+# Host
+Host: https://www.wareality.tech
+
+# Sitemaps
+Sitemap: https://www.wareality.tech/sitemap.xml
