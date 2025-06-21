@@ -582,7 +582,6 @@ export default function DashboardPage() {
       </div>
       <h1 className="text-3xl font-bold mb-2">Chat Analysis Dashboard</h1>
       <p className="text-muted-foreground mb-6">Results for: <span className='text-primary font-semibold'>{chatFileName}</span></p>
-      {/* Only show error if no analysisResults; error is cleared on successful load */}
 
 
       <Suspense fallback={
