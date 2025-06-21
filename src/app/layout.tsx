@@ -66,7 +66,19 @@ export default async function RootLayout({
     <ClerkProvider>
       <html lang="en" suppressHydrationWarning  >
         <head>
-          <link rel="icon" type="image/png" href="logo.png"></link>
+          <link
+            rel="icon"
+            href="/icon?<generated>"
+            type="image/<generated>"
+            sizes="<generated>"
+          />
+
+          <link
+            rel="apple-touch-icon"
+            href="/apple-icon?<generated>"
+            type="image/<generated>"
+            sizes="<generated>"
+          />
 
           <meta name="description" content="Visualize your WhatsApp messages like never before." />
 
