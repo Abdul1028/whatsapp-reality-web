@@ -67,7 +67,6 @@ const isScaled = activeThemeValue?.endsWith("-scaled")
     <ClerkProvider>
       <html lang="en" suppressHydrationWarning  >
         <head>
-          
         <link rel="icon" type="image/png" href="logo.png"></link>
         </head>
         <body
