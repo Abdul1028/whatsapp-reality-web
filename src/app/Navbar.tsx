@@ -58,7 +58,7 @@ function Navbar() {
           {/* Left section */}
           <div className="flex items-center gap-2">
             <span className="font-semibold text-lg bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
-            <Link href="/">WIT-REALITY</Link>
+            <Link href="/">WA-REALITY</Link>
             </span>
           </div>
 

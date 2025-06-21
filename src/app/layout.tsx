@@ -108,13 +108,13 @@ export default async function RootLayout({
         >
           <ThemeProvider
             attribute="class"
-            defaultTheme="system"
-            enableSystem
+            defaultTheme="light"
+            enableSystem={false}
             disableTransitionOnChange
             enableColorScheme
           >
             <ActiveThemeProvider initialTheme={activeThemeValue}>
-              <div className="texture" />
+              <div className="texture" /> 
               {children}
               <Toaster richColors closeButton />
             </ActiveThemeProvider>

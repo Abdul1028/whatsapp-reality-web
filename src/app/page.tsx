@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { MessageSquareText, BarChartBig, Users, ShieldCheck, Sparkles } from "lucide-react";
+import { MessageSquareText, BarChartBig, Users, ShieldCheck, Sparkles, Github, Mail, Code, Cpu, Zap, Globe } from "lucide-react";
 import Navbar from "./Navbar";
 import {
   Card,
@@ -28,9 +28,14 @@ export default function Home() {
               before. Discover activity patterns, identify key participants, and
               gain valuable insights securely and privately.
             </p>
-            <Button asChild size="lg" className="px-8 py-6 text-lg mt-4">
-              <Link href="/upload">Analyze Your Chat Now</Link>
-            </Button>
+            <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 mt-4">
+              <Button asChild size="lg" className="px-8 py-6 text-lg">
+                <Link href="/upload">Analyze Your Chat Now</Link>
+              </Button>
+              <Button asChild variant="outline" size="lg" className="py-6 text-lg">
+                <Link href="/about">About Us</Link>
+              </Button>
+            </div>
           </div>
           <div className="mt-12 md:mt-0">
             <LandingHeroChart />
@@ -85,6 +90,89 @@ export default function Home() {
                 </p>
               </CardContent>
             </Card>
+          </div>
+        </div>
+
+        {/* About Us Section */}
+        <div className="mb-16 md:mb-24">
+          <h2 className="text-3xl font-bold text-center mb-12 font-[--font-pt-sans]">
+            About WhatsApp Reality
+          </h2>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+            <div className="text-center lg:text-left">
+              <div className="w-32 h-32 bg-gradient-to-br from-primary to-primary/70 rounded-full mx-auto lg:mx-0 mb-6 flex items-center justify-center">
+                <Code className="h-16 w-16 text-white" />
+              </div>
+              <h3 className="text-3xl font-bold font-[--font-pt-sans] mb-2">Abdul Shaikh</h3>
+              <p className="text-xl text-muted-foreground font-[--font-nunito] mb-4">
+                Full-Stack Developer & Data Enthusiast
+              </p>
+              <p className="text-muted-foreground font-[--font-nunito] mb-6">
+                Passionate about creating innovative solutions that bridge the gap between 
+                complex data and user-friendly experiences. WhatsApp Reality was born from 
+                the desire to help people understand their digital conversations better.
+              </p>
+              <div className="flex flex-wrap gap-3 justify-center lg:justify-start">
+                <Button asChild variant="outline" size="sm">
+                  <Link href="https://github.com/Abdul1028" target="_blank" rel="noopener noreferrer">
+                    <Github className="h-4 w-4 mr-2" />
+                    GitHub
+                  </Link>
+                </Button>
+                <Button asChild variant="outline" size="sm">
+                  <Link href="mailto:contact@wareality.tech">
+                    <Mail className="h-4 w-4 mr-2" />
+                    Contact
+                  </Link>
+                </Button>
+                <Button asChild variant="outline" size="sm">
+                  <Link href="/about">
+                    Learn More
+                  </Link>
+                </Button>
+              </div>
+            </div>
+            <div className="space-y-4">
+              <div className="group rounded-lg border bg-card/50 p-4 transition-colors hover:bg-card">
+                <div className="flex items-center gap-4">
+                  <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+                    <Zap className="h-6 w-6" />
+                  </div>
+                  <div>
+                    <h4 className="font-semibold font-[--font-pt-sans] text-lg">Modern Tech Stack</h4>
+                    <p className="text-muted-foreground font-[--font-nunito] text-sm">
+                      Built with Next.js, TypeScript, and Tailwind CSS, using shadcn/ui for components. Deployed on Vercel for blazing-fast performance.
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <div className="group rounded-lg border bg-card/50 p-4 transition-colors hover:bg-card">
+                <div className="flex items-center gap-4">
+                  <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+                    <Cpu className="h-6 w-6" />
+                  </div>
+                  <div>
+                    <h4 className="font-semibold font-[--font-pt-sans] text-lg">Secure Client-Side Processing</h4>
+                    <p className="text-muted-foreground font-[--font-nunito] text-sm">
+                      All processing happens in your browser for privacy. It works great on laptops and desktops, but large chat files may be slower on mobile devices.
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <div className="group rounded-lg border bg-card/50 p-4 transition-colors hover:bg-card">
+                <div className="flex items-center gap-4">
+                  <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+                    <Globe className="h-6 w-6" />
+                  </div>
+                  <div>
+                    <h4 className="font-semibold font-[--font-pt-sans] text-lg">Global Impact</h4>
+                    <p className="text-muted-foreground font-[--font-nunito] text-sm">
+                      Helping users worldwide understand their digital communication patterns.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
