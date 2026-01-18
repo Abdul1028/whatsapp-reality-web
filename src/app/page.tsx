@@ -103,7 +103,7 @@ export default function Home() {
               <div className="w-32 h-32 bg-gradient-to-br from-primary to-primary/70 rounded-full mx-auto lg:mx-0 mb-6 flex items-center justify-center">
                 <Code className="h-16 w-16 text-white" />
               </div>
-              <h3 className="text-3xl font-bold font-[--font-pt-sans] mb-2">Saumya Maurya</h3>
+              <h3 className="text-3xl font-bold font-[--font-pt-sans] mb-2">Abdul Shaikh</h3>
               <p className="text-xl text-muted-foreground font-[--font-nunito] mb-4">
                 Full-Stack Developer & Data Enthusiast
               </p>
@@ -114,7 +114,7 @@ export default function Home() {
               </p>
               <div className="flex flex-wrap gap-3 justify-center lg:justify-start">
                 <Button asChild variant="outline" size="sm">
-                  <Link href="https://github.com/saum1234" target="_blank" rel="noopener noreferrer">
+                  <Link href="https://github.com/Abdul1028" target="_blank" rel="noopener noreferrer">
                     <Github className="h-4 w-4 mr-2" />
                     GitHub
                   </Link>
